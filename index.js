@@ -48,10 +48,12 @@ const passwords = ["dee69071b3028f66e062cd2dd26614fb81a8a4ef","38613e19664010627
 
 //================INITS=================//
 init = ()=>{
-	//ctx.reply(helpMessage);
+	ctx.reply(helpMessage);
 }
 
-bot.command("start",init);
+bot.hears('/start', (ctx)=>{
+    init();
+});
 
 //================ADMIN STUFF=================//
 let admins = {};
@@ -61,7 +63,7 @@ let admins = {};
 	"level":<level: 0 = master admin, can remove admins and change scores | not 0 = normal admin>
 }*/
 
-bot.command('setadmin', (ctx)=>{
+bot.command('set_admin', (ctx)=>{
 	let pwd = ctx.state.command.args;
 	if(pwd == null || pwd.length == 0 || ctx.message.from.is_bot){
 		ctx.reply("Incorrect Password!");
