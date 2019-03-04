@@ -1,11 +1,11 @@
 {
-  "name": "biblequizzle",
+  "name": "brmcgamesleaderboard",
   "version": "2.0.0",
   "description": "Live Leaderboard for Games at camps. Created by Samuel Leong for BRMC 123Camp 2019",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "now-start": "micro-bot -d ${NOW_URL}",
+    "now-start": "micro-bot -t {BOT_TOKEN} -d ${NOW_URL}",
     "start": "now -e BOT_TOKEN=748546786:AAHiva-f5TsKkvr1RiUYdZG333ghcaq9hAQ --public"
   },
   "repository": {
@@ -13,11 +13,7 @@
     "url": "git+https://github.com/Samleo8/BRMCGamesLeaderboard.git"
   },
   "keywords": [
-    "bible",
-    "trivia",
-    "quiz",
-    "telegram",
-    "bot"
+    "leadeboard"
   ],
   "author": "Samuel Leong <telegram+samleocw@gmail.com>",
   "license": "ISC",
@@ -27,6 +23,8 @@
   "homepage": "https://github.com/Samleo8/BRMCGamesLeaderboard#README.md",
   "dependencies": {
     "axios": "^0.18.0",
-    "micro-bot": "^2.4.0"
-  }
+    "micro-bot": "^2.4.0",
+    "microbot": "^1.0.0"
+  },
+  "devDependencies": {}
 }
