@@ -52,6 +52,7 @@ init = ()=>{
 }
 
 bot.hears('/start', (ctx)=>{
+    ctx.reply("Hello?!?");
     init();
 });
 
@@ -63,8 +64,10 @@ let admins = {};
 	"level":<level: 0 = master admin, can remove admins and change scores | not 0 = normal admin>
 }*/
 
-bot.command('set_admin', (ctx)=>{
-	let pwd = ctx.state.command.args;
+bot.command('setadmin', (ctx)=>{
+    ctx.reply("Setting admin!");
+
+	/*let pwd = ctx.state.command.args;
 	if(pwd == null || pwd.length == 0 || ctx.message.from.is_bot){
 		ctx.reply("Incorrect Password!");
 		return;
@@ -82,7 +85,7 @@ bot.command('set_admin', (ctx)=>{
 	if(pwd == null || pwd.length == 0){
 		ctx.reply("Incorrect Password!");
 		return;
-	}
+	}*/
 });
 
 //Get ids of admins from admins.json and pass to `admins` array.

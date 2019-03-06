@@ -5,8 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "now-start": "micro-bot -t {BOT_TOKEN} -d ${NOW_URL}",
-    "start": "now -e BOT_TOKEN=748546786:AAHiva-f5TsKkvr1RiUYdZG333ghcaq9hAQ --public"
+    "now-start": "micro-bot -t {BOT_TOKEN} -d ${NOW_URL}"
   },
   "repository": {
     "type": "git",
@@ -23,8 +22,10 @@
   "homepage": "https://github.com/Samleo8/BRMCGamesLeaderboard#README.md",
   "dependencies": {
     "axios": "^0.18.0",
-    "micro-bot": "^2.4.0",
-    "microbot": "^1.0.0"
+    "crypto": "^1.0.1",
+    "micro-bot": "^2.5.3",
+    "telegraf": "^3.27.1",
+    "telegraf-command-parts": "^1.0.3"
   },
   "devDependencies": {}
 }
