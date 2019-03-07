@@ -13,12 +13,14 @@ Required Node libraries: telegraf, micro-bot, axios, telegraf-command-parts, fs,
 Now CLI has been installed with
     npm install -g now
 
-To add the secret API key,
+Add the secret API key to Now config
+[https://zeit.co/docs/v2/deployments/environment-variables-and-secrets/#securing-environment-variables-using-secrets]:
     now secret add brmcgamesleaderboard-api-key <api-key>
-To modify the secret API key,
-    now secret rename brmcgamesleaderboard-api-key <new-api-key>
 
-See: [https://zeit.co/docs/v2/deployments/environment-variables-and-secrets/#securing-environment-variables-using-secrets]
+[ To modify the secret API key,
+    now secret rename brmcgamesleaderboard-api-key <new-api-key>
+]
+
 */
 
 
@@ -48,7 +50,7 @@ sha1_hash = (input)=>{
 }
 
 const commandParts = require('telegraf-command-parts');
-app.use(commandParts());
+bot.use(commandParts());
 
 const helpMessage =
 "This bot controls the live leaderboard for BRMC Camp Games. Most commands are admin only. To activate your admin privileges, type in /setadmin followed by the password given to you.\n\n"+
@@ -70,7 +72,7 @@ init = ()=>{
 }
 
 bot.command('start', (ctx)=>{
-    ctx.reply("Starting?");
+    ctx.reply("Starting? ");
 })
 
 bot.hears('/start', (ctx)=>{
