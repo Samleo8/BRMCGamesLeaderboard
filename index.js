@@ -68,6 +68,8 @@ const passwords = ["c9d19f7b00d8cb12425fdcdc3f86717f0736c7b5","1cc695108a8351bd6
 //================INITS=================//
 init = (ctx)=>{
 	ctx.reply(helpMessage);
+
+    retrieveAdminData();
 }
 
 bot.start(init);
@@ -77,11 +79,11 @@ let admins = {};
 /*Array of JSON objects containing:
 "id":{
 	"name":<name>,
-	"level":<level: 0 = master admin, can remove admins and change scores | not 0 = normal admin>
+	"level":<level: 0 = master admin, can remove admins and change scores | >0 = normal admin>
 }*/
 
 bot.command('setadmin', (ctx)=>{
-    ctx.reply("Setting admin rights for user "+_getName(ctx)+":");
+    ctx.reply("Setting admin rights for "+_getName(ctx)+":");
 
     let id = ctx.message.from.id;
 	let pwd = ctx.state.command.args;
@@ -97,12 +99,11 @@ bot.command('setadmin', (ctx)=>{
     }
 
 	pwd_hashed = sha1_hash(pwd);
-    if(getAdminPrivilege(id) == -1) ctx.reply(pwd+" "+pwd_hashed);
+    if(getAdminPrivilege(id) == 0) ctx.reply(pwd+" "+pwd_hashed);
 
 	for(i=0;i<passwords.length;i++){
 		if(passwords[i]==pwd_hashed){
-			setAdmin(ctx, id, _getName(ctx), i);
-			return;
+			return setAdmin(ctx, id, _getName(ctx), i);
 		}
 	}
 
@@ -111,13 +112,32 @@ bot.command('setadmin', (ctx)=>{
 });
 
 //Get ids of admins from admins.json and pass to `admins` array.
-retrieveAdmins = (ctx)=>{
+retrieveAdminData = (ctx)=>{
+    //Check if file exists; if not, create it to prevent problems with access permissions
+    if(!fs.existsSync("admin.json")){
+        ctx.reply("[DEBUG] admin.json doesn't exist.. creating file..");
 
+        fs.writeFileSync(
+            'admin.json',
+            JSON.stringify(admins,null,4)
+        );
+
+        ctx.reply("[DEBUG] File created!");
+        return admins;
+    }
+
+    //Retrieve data from leaderboard.json
+    return admins = JSON.parse(fs.readFileSync('admin.json', 'utf8'));
 }
 
 //Save into admin.json
 saveAdmins = (ctx)=>{
-    ctx.reply("[DEBUG] Saved admin data.");
+    ctx.reply("[DEBUG] Saved admin data: "+JSON.stringify(admins,null,4));
+
+    fs.writeFileSync(
+        'admin.json',
+        JSON.stringify(admins,null,4)
+    );
 }
 
 //Check if person is admin
@@ -138,18 +158,19 @@ getAdminPrivilege = (_id)=>{
 
 //Set admin by details
 setAdmin = (ctx, _id, _name, _privilege)=>{
-    if( isAdmin(_id) ) return;
+    if( isAdmin(_id) && _privilege!=getAdminPrivilege(_id)){
+        //Already admin, no promotion
+        return ctx.reply("[ERROR] "+_name+" is already an admin.");
+    }
 
 	admins[_id] = {
 		"name":_name,
 		"level":_privilege
 	};
 
-	ctx.reply(JSON.stringify(admins));
+    saveAdmins(ctx);
 
-    ctx.reply(_name+" is now +"+((_privilege)?"an":"a master")+" admin!");
-
-	saveAdmins(ctx);
+    return ctx.reply(_name+" is now "+((_privilege)?"an":"a master")+" admin!");
 }
 
 //================ACTUAL GAMEPLAY=================//
