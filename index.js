@@ -17,10 +17,6 @@ Add the secret API key to Now config
 [https://zeit.co/docs/v2/deployments/environment-variables-and-secrets/#securing-environment-variables-using-secrets]:
     now secret add brmcgamesleaderboard-api-key <api-key>
 
-[ To modify the secret API key,
-    now secret rename brmcgamesleaderboard-api-key <new-api-key>
-]
-
 */
 
 
@@ -38,7 +34,10 @@ Add the secret API key to Now config
 const { Markup, Extra } = require('micro-bot');
 const Telegraf  = require('micro-bot');
 
-const bot = new Telegraf(process.env.BOT_TOKEN, { username: "brmcgamesleaderboardbot" });
+const bot = new Telegraf(
+    process.env.BOT_TOKEN,
+    { username: "brmcgamesleaderboardbot" }
+);
 bot.use(Telegraf.log());
 
 const fs = require('fs');
@@ -64,21 +63,14 @@ let i = 0, j = 0;
 
 const regex_alphanum = new RegExp("[A-Z0-9]","gi");
 const regex_non_alphanum = new RegExp("[^A-Z0-9]","gi");
-const passwords = ["dee69071b3028f66e062cd2dd26614fb81a8a4ef","38613e1966401062759eb4938d55880fbe28ea90"]; //SHA-1 hashed
+const passwords = ["c9d19f7b00d8cb12425fdcdc3f86717f0736c7b5","1cc695108a8351bd651b0b43f1e9f142d10b0d6d"]; //SHA-1 hashed
 
 //================INITS=================//
-init = ()=>{
+init = (ctx)=>{
 	ctx.reply(helpMessage);
 }
 
-bot.command('start', (ctx)=>{
-    ctx.reply("Starting? ");
-})
-
-bot.hears('/start', (ctx)=>{
-    ctx.reply("Hello?!?");
-    init();
-});
+bot.start(init);
 
 //================ADMIN STUFF=================//
 let admins = {};
@@ -89,41 +81,64 @@ let admins = {};
 }*/
 
 bot.command('setadmin', (ctx)=>{
-    ctx.reply("Setting admin!");
+    ctx.reply("Setting admin rights for user "+_getName(ctx)+":");
 
-	/*let pwd = ctx.state.command.args;
-	if(pwd == null || pwd.length == 0 || ctx.message.from.is_bot){
-		ctx.reply("Incorrect Password!");
+    let id = ctx.message.from.id;
+	let pwd = ctx.state.command.args;
+
+	if(pwd == null || pwd.length == 0){
+		ctx.reply("[ERROR] Correct command is: /setadmin <password>");
 		return;
 	}
 
+    if(ctx.message.from.is_bot){
+        ctx.reply("[ERROR] Only humans can access admin rights.");
+		return;
+    }
+
 	pwd_hashed = sha1_hash(pwd);
+    if(getAdminPrivilege(id) == -1) ctx.reply(pwd+" "+pwd_hashed);
 
 	for(i=0;i<passwords.length;i++){
-		if(passwords[i]==pwd){
-			setAdmin(ctx.message.from.id, ctx.message.from.first_name+" "+ctx.message.from.last_name, i);
+		if(passwords[i]==pwd_hashed){
+			setAdmin(ctx, id, _getName(ctx), i);
 			return;
 		}
 	}
 
-	if(pwd == null || pwd.length == 0){
-		ctx.reply("Incorrect Password!");
-		return;
-	}*/
+    //If it goes to this line, it means all checks failed.
+	return ctx.reply("[INFO] Incorrect Password!");
 });
 
 //Get ids of admins from admins.json and pass to `admins` array.
-retrieveAdmins = ()=>{
+retrieveAdmins = (ctx)=>{
 
 }
 
 //Save into admin.json
-saveAdmins = ()=>{
-
+saveAdmins = (ctx)=>{
+    ctx.reply("[DEBUG] Saved admin data.");
 }
 
-setAdmin = (_id, _name, _privilege)=>{
-    if(admins.hasOwnProperty(_id)) return;
+//Check if person is admin
+isAdmin = (_id)=>{
+    return admins.hasOwnProperty(_id);
+}
+
+//Return admin privilege:
+/*
+    -1 - non-admin
+     0 - master admin
+    >0 - normal admin
+*/
+getAdminPrivilege = (_id)=>{
+    if(!isAdmin(_id)) return -1;
+    return admins[_id].level;
+}
+
+//Set admin by details
+setAdmin = (ctx, _id, _name, _privilege)=>{
+    if( isAdmin(_id) ) return;
 
 	admins[_id] = {
 		"name":_name,
@@ -132,7 +147,9 @@ setAdmin = (_id, _name, _privilege)=>{
 
 	ctx.reply(JSON.stringify(admins));
 
-	saveAdmins();
+    ctx.reply(_name+" is now +"+((_privilege)?"an":"a master")+" admin!");
+
+	saveAdmins(ctx);
 }
 
 //================ACTUAL GAMEPLAY=================//
@@ -376,6 +393,19 @@ bot.command('help', (ctx) => {
 bot.hears("❓ Help ❓", (ctx)=>{
 	ctx.reply(helpMessage);
 });
+
+//Get user's name from ctx
+_getName = (ctx)=>{
+    let username = ctx.message.from.username.toString();
+	let first_name = ctx.message.from.first_name.toString();
+	let last_name = ctx.message.from.last_name.toString();
+
+	if(first_name && last_name) return first_name+" "+last_name;
+    if(!first_name && !last_name) return username;
+	if(first_name) return first_name;
+
+    return last_name;
+}
 
 //================EXPORT BOT=================//
 module.exports = bot;
