@@ -6,10 +6,19 @@ REFERENCES:
 - https://www.sohamkamani.com/blog/2016/09/21/making-a-telegram-bot/
 */
 
+/* CONFIGURATION:
+Required Node libraries: Telegraf, micro-bot, fs, crypto
+Now CLI has been installed with
+    npm install -g now
+*/
+
+
 /* RUNNING IN NODE JS:
-1) now -e BOT_TOKEN='<api key>' --public
+1) now -e BOT_TOKEN= --public
 2) npm start
 (Note that (2) will run (1) as defined in the start script)
+
+
 */
 
 //================LIBRARIES AND VARIABLES=================//
@@ -50,6 +59,10 @@ const passwords = ["dee69071b3028f66e062cd2dd26614fb81a8a4ef","38613e19664010627
 init = ()=>{
 	ctx.reply(helpMessage);
 }
+
+bot.command('start', (ctx)=>{
+    ctx.reply("Starting?");
+})
 
 bot.hears('/start', (ctx)=>{
     ctx.reply("Hello?!?");
