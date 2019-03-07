@@ -6,7 +6,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "now-start": "micro-bot -t {BOT_TOKEN} -d ${NOW_URL}",
-    "start": "now -e BOT_TOKEN=748546786:AAHiva-f5TsKkvr1RiUYdZG333ghcaq9hAQ --public"
+    "start": "now -e BOT_TOKEN=@brmcgamesleaderboard-api-key --public"
   },
   "repository": {
     "type": "git",

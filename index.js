@@ -2,19 +2,28 @@
 CREATING BIBLE QUIZZLE TELEGRAM BOT USING telegraf LIBRARY.
 
 REFERENCES:
-- https://thedevs.network/blog/build-a-simple-telegram-bot-with-node-js
-- https://www.sohamkamani.com/blog/2016/09/21/making-a-telegram-bot/
+"- https://thedevs.network/blog/build-a-simple-telegram-bot-with-node-js
+"- https://www.sohamkamani.com/blog/2016/09/21/making-a-telegram-bot/
 */
 
 /* CONFIGURATION:
-Required Node libraries: Telegraf, micro-bot, fs, crypto
+Required Node libraries: telegraf, micro-bot, axios, telegraf-command-parts, fs, crypto
+    npm install --save telegraf telegraf-command-parts micro-bot fs crypto axios
+
 Now CLI has been installed with
     npm install -g now
+
+To add the secret API key,
+    now secret add brmcgamesleaderboard-api-key <api-key>
+To modify the secret API key,
+    now secret rename brmcgamesleaderboard-api-key <new-api-key>
+
+See: [https://zeit.co/docs/v2/deployments/environment-variables-and-secrets/#securing-environment-variables-using-secrets]
 */
 
 
 /* RUNNING IN NODE JS:
-1) now -e BOT_TOKEN= --public
+1) now -e BOT_TOKEN=@brmcgamesleaderboard-api-key --public
 2) npm start
 (Note that (2) will run (1) as defined in the start script)
 
