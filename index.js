@@ -113,7 +113,7 @@ let data = {
             dataStr+".json",
             JSON.stringify(this[dataStr],null,4)
         );
-    }
+    ,
     "saveAll":function(dataStr, ctx){
         this.save("admins",ctx);
         this.save("passwords",ctx);
