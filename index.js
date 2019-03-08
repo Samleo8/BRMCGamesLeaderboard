@@ -52,24 +52,45 @@ const commandParts = require('telegraf-command-parts');
 bot.use(commandParts());
 
 const helpMessage =
-"This bot controls the live leaderboard for BRMC Camp Games. Most commands are admin only. To activate your admin privileges, type in /setadmin followed by the password given to you.\n\n"+
-"/show - Show current scores\n"+
-"/setadmin <password> - Makes the current user (i.e. you) admin\n"+
-"/update - Update group scores [admin]\n"+
-"/newgroup - Create a new group with score 0 [admin]\n"+
+"This bot controls the live leaderboard for BRMC Camp Games. Most commands are admin only. To activate your admin privileges, type in /admin followed by the password given to you.\n\n"+
+"/show - Show current scores.\n"+
+"/admin <password> - Makes the current user (i.e. you) admin of the group whose password has been given to you.\n"+
+"/update - Update group scores [admin].\n"+
+"/newgroup - Create a new group with score 0 [admin].\n"+
 "/help - Displays this help message.\n";
+
+const helpMessageMaster =
+"/newleaderboard - Creates a new leaderboard; makes you choose a Telegram group/channel that is is linked to; generates passcode for that leaderboard [master].\n"+
+"/deleteleaderboard - Delete a leaderboard [master].\n";
 
 let i = 0, j = 0;
 
 const regex_alphanum = new RegExp("[A-Z0-9]","gi");
 const regex_non_alphanum = new RegExp("[^A-Z0-9]","gi");
-const passwords = ["c9d19f7b00d8cb12425fdcdc3f86717f0736c7b5","1cc695108a8351bd651b0b43f1e9f142d10b0d6d"]; //SHA-1 hashed
+const passwords = {
+    "c9d19f7b00d8cb12425fdcdc3f86717f0736c7b5":{ //Master admin
+        "level":0, //master
+        "group":0 //master
+    },
+    "1cc695108a8351bd651b0b43f1e9f142d10b0d6d":{ //BRMC 123 Camp
+        "level":1,
+        "group":0
+    }
+} //SHA-1 hashed
 
 //================INITS=================//
 init = (ctx)=>{
+    retrieveAdminData();
 	ctx.reply(helpMessage);
 
-    retrieveAdminData();
+    console.log("INIT CONTEXTS:");
+    console.log(ctx);
+    if(admins[ctx.message.chat.id])
+        ctx.reply(
+            "\n[MASTER ADMIN COMMANDS]\n"+
+            "----------------------------------\n"+
+            helpMessageMaster
+        );
 }
 
 bot.start(init);
@@ -82,9 +103,7 @@ let admins = {};
 	"level":<level: 0 = master admin, can remove admins and change scores | >0 = normal admin>
 }*/
 
-bot.command('setadmin', (ctx)=>{
-    ctx.reply("Setting admin rights for "+_getName(ctx)+":");
-
+bot.command('admin', (ctx)=>{
     let id = ctx.message.from.id;
 	let pwd = ctx.state.command.args;
 
@@ -101,28 +120,24 @@ bot.command('setadmin', (ctx)=>{
 	pwd_hashed = sha1_hash(pwd);
     if(getAdminPrivilege(id) == 0) ctx.reply(pwd+" "+pwd_hashed);
 
-	for(i=0;i<passwords.length;i++){
-		if(passwords[i]==pwd_hashed){
-			return setAdmin(ctx, id, _getName(ctx), i);
-		}
+	if(passwords.hasOwnProperty(pwd_hashed)){
+		return setAdmin(ctx, id, _getName(ctx), pwd_hashed);
 	}
-
-    //If it goes to this line, it means all checks failed.
-	return ctx.reply("[INFO] Incorrect Password!");
+    else return ctx.reply("[INFO] Incorrect Password!");
 });
 
 //Get ids of admins from admins.json and pass to `admins` array.
 retrieveAdminData = (ctx)=>{
     //Check if file exists; if not, create it to prevent problems with access permissions
     if(!fs.existsSync("admin.json")){
-        ctx.reply("[DEBUG] admin.json doesn't exist.. creating file..");
+        _log(ctx,"admin.json doesn't exist.. creating file..");
 
         fs.writeFileSync(
             'admin.json',
             JSON.stringify(admins,null,4)
         );
 
-        ctx.reply("[DEBUG] File created!");
+        _log(ctx,"File created!");
         return admins;
     }
 
@@ -132,7 +147,7 @@ retrieveAdminData = (ctx)=>{
 
 //Save into admin.json
 saveAdmins = (ctx)=>{
-    ctx.reply("[DEBUG] Saved admin data: "+JSON.stringify(admins,null,4));
+    _log(ctx,"Saved admin data: "+JSON.stringify(admins,null,4));
 
     fs.writeFileSync(
         'admin.json',
@@ -157,15 +172,20 @@ getAdminPrivilege = (_id)=>{
 }
 
 //Set admin by details
-setAdmin = (ctx, _id, _name, _privilege)=>{
-    if( isAdmin(_id) && _privilege!=getAdminPrivilege(_id)){
+setAdmin = (ctx, _id, _name, _hashedPassword)=>{
+    ctx.reply("Setting admin rights for "+_getName(ctx)+":");
+
+    let _privilege = passwords[_hashedPassword].level;
+
+    if( isAdmin(_id) && _privilege>=getAdminPrivilege(_id)){
         //Already admin, no promotion
         return ctx.reply("[ERROR] "+_name+" is already an admin.");
     }
 
 	admins[_id] = {
 		"name":_name,
-		"level":_privilege
+		"level":_privilege,
+        "password":_hashedPassword
 	};
 
     saveAdmins(ctx);
@@ -173,7 +193,46 @@ setAdmin = (ctx, _id, _name, _privilege)=>{
     return ctx.reply(_name+" is now "+((_privilege)?"an":"a master")+" admin!");
 }
 
-//================ACTUAL GAMEPLAY=================//
+//================LEADERBOARD SETUP=================//
+/* Master admin sets up leaderboard:
+    name, group to send to, password
+*/
+passwordRetrieve = ()=>{
+    //Check if file exists; if not, create it to prevent problems with access permissions
+    if(!fs.existsSync("passwords.json")){
+        _log(ctx,"passwords.json doesn't exist.. creating file..");
+
+        fs.writeFileSync(
+            'passwords.json',
+            JSON.stringify(passwords,null,4)
+        );
+
+        _log(ctx,"File created!");
+        return passwords;
+    }
+
+    //Retrieve data from leaderboard.json
+    return passwords = JSON.parse(fs.readFileSync('passwords.json', 'utf8'));
+}
+
+_generatePassword = (_len)=>{
+    const charset = "abcdefghijklmnopqstuvwxyzABCDEFGHIJKLMNOPQSTUVWXYZ0123456789";
+
+    if(_len == null || _len == undefined || typeof len == "undefined" || isNaN(_len) || _len < 8) _len = 8;
+
+    pwd = [];
+
+    for(var i=0;i<_len;i++){
+        var _rand = getRandomInt(0,charset.length-1);
+        pwd.push(charset[_rand]);
+    }
+
+    pwd = pwd.join("");
+
+    return {"raw":pwd, "hashed":sha1_hash(pwd)};
+}
+
+//================ACTUAL LEADERBOARD HANDLING=================//
 //Initialise Current Game object
 let scores = {};
 
@@ -414,6 +473,12 @@ bot.command('help', (ctx) => {
 bot.hears("❓ Help ❓", (ctx)=>{
 	ctx.reply(helpMessage);
 });
+
+//Display debug messages
+_log = (ctx, msg)=>{
+    //console.log("[DEBUG] "+msg);
+    if(getAdminPrivilege(ctx.message.from.id)==0) _log(ctx,""+msg);
+}
 
 //Get user's name from ctx
 _getName = (ctx)=>{
