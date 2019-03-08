@@ -65,27 +65,71 @@ const helpMessageMaster =
 
 let i = 0, j = 0;
 
-const regex_alphanum = new RegExp("[A-Z0-9]","gi");
-const regex_non_alphanum = new RegExp("[^A-Z0-9]","gi");
-const passwords = {
-    "c9d19f7b00d8cb12425fdcdc3f86717f0736c7b5":{ //Master admin
-        "level":0, //master
-        "group":0 //master
+//================DATA HANDLING=================//
+const MASTER = 0, NORMAL = 1;
+
+//Use data object for scalability
+let data = {
+    "admins":{},
+    "leaderboards":{},
+    "passwords":{  //SHA-1 hashed
+        "c9d19f7b00d8cb12425fdcdc3f86717f0736c7b5":{ //Master admin
+            "level":0, //master
+            "group":0 //master
+        },
+        "1cc695108a8351bd651b0b43f1e9f142d10b0d6d":{ //BRMC 123 Camp
+            "level":1, //admin for its group
+            "group":0
+        }
     },
-    "1cc695108a8351bd651b0b43f1e9f142d10b0d6d":{ //BRMC 123 Camp
-        "level":1,
-        "group":0
+
+    "retrieve":function(dataStr, ctx){
+        //Check if file exists; if not, create it to prevent problems with access permissions
+        if(!fs.existsSync(dataStr+".json")){
+            _log(ctx,dataStr+".json doesn't exist.. creating file..");
+
+            fs.writeFileSync(
+                dataStr+".json",
+                JSON.stringify(data["dataStr"],null,4)
+            );
+
+            _log(ctx,"File "+dataStr+".json created!");
+            return this[dataStr];
+        }
+
+        //Retrieve data from leaderboard.json
+        return this[dataStr] = JSON.parse(fs.readFileSync(dataStr+".json", 'utf8'));
+    },
+    "retrieveAll":function(ctx){
+        this.retrieve("admins",ctx);
+        this.retrieve("passwords",ctx);
+        this.retrieve("leaderboards",ctx);
+    },
+
+    "save":function(dataStr, ctx){
+        _log(ctx,"Saved "+dataStr+" data: "+JSON.stringify(this[dataStr],null,4));
+
+        fs.writeFileSync(
+            dataStr+".json",
+            JSON.stringify(this[dataStr],null,4)
+        );
     }
-} //SHA-1 hashed
+    "saveAll":function(dataStr, ctx){
+        this.save("admins",ctx);
+        this.save("passwords",ctx);
+        this.save("leaderboards",ctx);
+    }
+};
 
 //================INITS=================//
 init = (ctx)=>{
-    retrieveAdminData();
+    data.retrieveAll(ctx);
+
 	ctx.reply(helpMessage);
 
     console.log("INIT CONTEXTS:");
     console.log(ctx);
-    if(admins[ctx.message.chat.id])
+    if(data.admins[ctx.message.chat.id])
         ctx.reply(
             "\n[MASTER ADMIN COMMANDS]\n"+
             "----------------------------------\n"+
@@ -95,8 +139,7 @@ init = (ctx)=>{
 
 bot.start(init);
 
-//================ADMIN STUFF=================//
-let admins = {};
+//================ADMIN HANDLING=================//
 /*Array of JSON objects containing:
 "id":{
 	"name":<name>,
@@ -118,42 +161,13 @@ bot.command('admin', (ctx)=>{
     }
 
 	pwd_hashed = sha1_hash(pwd);
-    if(getAdminPrivilege(id) == 0) ctx.reply(pwd+" "+pwd_hashed);
+    if(getAdminPrivilege(id) == MASTER) ctx.reply(pwd+" "+pwd_hashed);
 
 	if(passwords.hasOwnProperty(pwd_hashed)){
 		return setAdmin(ctx, id, _getName(ctx), pwd_hashed);
 	}
     else return ctx.reply("[INFO] Incorrect Password!");
 });
-
-//Get ids of admins from admins.json and pass to `admins` array.
-retrieveAdminData = (ctx)=>{
-    //Check if file exists; if not, create it to prevent problems with access permissions
-    if(!fs.existsSync("admin.json")){
-        _log(ctx,"admin.json doesn't exist.. creating file..");
-
-        fs.writeFileSync(
-            'admin.json',
-            JSON.stringify(admins,null,4)
-        );
-
-        _log(ctx,"File created!");
-        return admins;
-    }
-
-    //Retrieve data from leaderboard.json
-    return admins = JSON.parse(fs.readFileSync('admin.json', 'utf8'));
-}
-
-//Save into admin.json
-saveAdmins = (ctx)=>{
-    _log(ctx,"Saved admin data: "+JSON.stringify(admins,null,4));
-
-    fs.writeFileSync(
-        'admin.json',
-        JSON.stringify(admins,null,4)
-    );
-}
 
 //Check if person is admin
 isAdmin = (_id)=>{
@@ -168,21 +182,21 @@ isAdmin = (_id)=>{
 */
 getAdminPrivilege = (_id)=>{
     if(!isAdmin(_id)) return -1;
-    return admins[_id].level;
+    return data.admins[_id].level;
 }
 
 //Set admin by details
 setAdmin = (ctx, _id, _name, _hashedPassword)=>{
     ctx.reply("Setting admin rights for "+_getName(ctx)+":");
 
-    let _privilege = passwords[_hashedPassword].level;
+    let _privilege = data.passwords[_hashedPassword].level;
 
     if( isAdmin(_id) && _privilege>=getAdminPrivilege(_id)){
         //Already admin, no promotion
         return ctx.reply("[ERROR] "+_name+" is already an admin.");
     }
 
-	admins[_id] = {
+	data.admins[_id] = {
 		"name":_name,
 		"level":_privilege,
         "password":_hashedPassword
@@ -193,28 +207,12 @@ setAdmin = (ctx, _id, _name, _hashedPassword)=>{
     return ctx.reply(_name+" is now "+((_privilege)?"an":"a master")+" admin!");
 }
 
+//[Master] Set admin
+
 //================LEADERBOARD SETUP=================//
 /* Master admin sets up leaderboard:
     name, group to send to, password
 */
-passwordRetrieve = ()=>{
-    //Check if file exists; if not, create it to prevent problems with access permissions
-    if(!fs.existsSync("passwords.json")){
-        _log(ctx,"passwords.json doesn't exist.. creating file..");
-
-        fs.writeFileSync(
-            'passwords.json',
-            JSON.stringify(passwords,null,4)
-        );
-
-        _log(ctx,"File created!");
-        return passwords;
-    }
-
-    //Retrieve data from leaderboard.json
-    return passwords = JSON.parse(fs.readFileSync('passwords.json', 'utf8'));
-}
-
 _generatePassword = (_len)=>{
     const charset = "abcdefghijklmnopqstuvwxyzABCDEFGHIJKLMNOPQSTUVWXYZ0123456789";
 
@@ -235,6 +233,14 @@ _generatePassword = (_len)=>{
 //================ACTUAL LEADERBOARD HANDLING=================//
 //Initialise Current Game object
 let scores = {};
+
+bot.command("newleaderboard",(ctx)=>{
+    let _id = ctx.message.from.id;
+
+    if(getAdminPrivilege(_id)!=MASTER){
+        return ctx.reply("[ERROR] You need to be a master admin to add a new leaderboard");
+    }
+});
 
 /*
 //Displaying of scores
