@@ -107,14 +107,14 @@ let data = {
     },
 
     "save":function(dataStr, ctx){
-        //_log(ctx,"Saved "+dataStr+" data: "+JSON.stringify(this[dataStr],null,4));
-
         fs.writeFileSync(
             dataStr+".json",
             JSON.stringify(this[dataStr],null,4)
         );
+
+        _log(ctx,"Saved "+dataStr+" data: "+JSON.stringify(this[dataStr],null,4));
     },
-    "saveAll":function(dataStr, ctx){
+    "saveAll":function(ctx){
         this.save("admins",ctx);
         this.save("passwords",ctx);
         this.save("leaderboards",ctx);
@@ -142,21 +142,19 @@ bot.command('admin', (ctx)=>{
 	let pwd = ctx.state.command.args;
 
 	if(pwd == null || pwd.length == 0){
-		ctx.reply("[ERROR] Correct command is: /admin <password>");
-		return;
+		return ctx.reply("[ERROR] Correct command is: /admin <password>");
 	}
 
     if(ctx.message.from.is_bot){
-        ctx.reply("[ERROR] Only humans can access admin rights.");
-		return;
+        return ctx.reply("[ERROR] Only humans can access admin rights.");
     }
 
     //Retrieve data in case
-    data.retrieve("admins",ctx); data.retrieve("passwords",ctx);
+    //data.retrieveAll(ctx);
 
     //Hash password and compare to see if valid
-	pwd_hashed = sha1_hash(pwd);
-    _log(pwd+" "+pwd_hashed);
+	let pwd_hashed = sha1_hash(pwd);
+    _log(ctx,pwd+" "+pwd_hashed);
 
 	if(data.passwords.hasOwnProperty(pwd_hashed)){
 		return setAdmin(ctx, id, _getName(ctx), pwd_hashed);
@@ -265,8 +263,8 @@ bot.command("newleaderboard",(ctx)=>{
     //Generate password for this particular leaderboard/Telegram group
     _pwdObj = _generatePassword(10);
 
-    _log(ctx.chat.id+" "+ctx.chat.username+" "+ctx.chat.first_name+" "+ctx.chat.last_name);
-    _log(JSON.stringify(ctx.chat));
+    _log(ctx,ctx.chat.id+" "+ctx.chat.username+" "+ctx.chat.first_name+" "+ctx.chat.last_name);
+    _log(ctx,JSON.stringify(ctx.chat));
 
     //Add to the leaderboards
     data.leaderboards[ctx.chat.id] = {
@@ -324,7 +322,7 @@ _helpMessageDisplay = (ctx)=>{
 //Display debug messages
 _log = (ctx, msg)=>{
     //console.log("[DEBUG] "+msg);
-    if(getAdminPrivilege(ctx.message.from.id)==MASTER) ctx.reply("[DEBUG] "+msg);
+    //if(getAdminPrivilege(ctx.message.from.id)==MASTER) ctx.reply("[DEBUG] "+msg);
 }
 
 //Get user's name from ctx
