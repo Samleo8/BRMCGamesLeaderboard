@@ -52,15 +52,17 @@ const commandParts = require('telegraf-command-parts');
 bot.use(commandParts());
 
 const helpMessage =
-"This bot controls the live leaderboard for BRMC Camp Games. Most commands are admin only. To activate your admin privileges, type in /admin followed by the password given to you.\n\n"+
+"This bot controls the live leaderboard for BRMC Camp Games. Most commands are admin only. To activate your admin privileges, type in /admin followed by the password given to you.\n\n";
+
+const commandsMessage =
 "/show - Show current scores.\n"+
-"/admin <password> - Makes the current user (i.e. you) admin of the group whose password has been given to you.\n"+
+"/admin <password> - Makes the current user (i.e. you) admin of the group whose password has been given to you. DO THIS ONLY IN THE PRIVATE CHAT\n"+
 "/update - Update group scores [admin].\n"+
 "/newgroup - Create a new group with score 0 [admin].\n"+
 "/help - Displays this help message.\n";
 
-const helpMessageMaster =
-"/newleaderboard - Creates a new leaderboard; makes you choose a Telegram group/channel that is is linked to; generates passcode for that leaderboard [master].\n"+
+const commandsMasterMessage =
+"/newleaderboard - Creates a new leaderboard. Command MUST be given in the Telegram group/channel that is is linked to. Generates passcode for that leaderboard to be given to admins [master].\n"+
 "/deleteleaderboard - Delete a leaderboard [master].\n";
 
 let i = 0, j = 0;
@@ -74,12 +76,8 @@ let data = {
     "leaderboards":{},
     "passwords":{  //SHA-1 hashed
         "c9d19f7b00d8cb12425fdcdc3f86717f0736c7b5":{ //Master admin
-            "level":0, //master
+            "level":MASTER, //master
             "group":0 //master
-        },
-        "1cc695108a8351bd651b0b43f1e9f142d10b0d6d":{ //BRMC 123 Camp
-            "level":1, //admin for its group
-            "group":0
         }
     },
 
@@ -98,7 +96,9 @@ let data = {
         }
 
         //Retrieve data from leaderboard.json
-        return this[dataStr] = JSON.parse(fs.readFileSync(dataStr+".json", 'utf8'));
+        return this[dataStr] = JSON.parse(
+            fs.readFileSync(dataStr+".json", 'utf8')
+        );
     },
     "retrieveAll":function(ctx){
         this.retrieve("admins",ctx);
@@ -107,13 +107,13 @@ let data = {
     },
 
     "save":function(dataStr, ctx){
-        _log(ctx,"Saved "+dataStr+" data: "+JSON.stringify(this[dataStr],null,4));
+        //_log(ctx,"Saved "+dataStr+" data: "+JSON.stringify(this[dataStr],null,4));
 
         fs.writeFileSync(
             dataStr+".json",
             JSON.stringify(this[dataStr],null,4)
         );
-    ,
+    },
     "saveAll":function(dataStr, ctx){
         this.save("admins",ctx);
         this.save("passwords",ctx);
@@ -125,16 +125,7 @@ let data = {
 init = (ctx)=>{
     data.retrieveAll(ctx);
 
-	ctx.reply(helpMessage);
-
-    console.log("INIT CONTEXTS:");
-    console.log(ctx);
-    if(data.admins[ctx.message.chat.id])
-        ctx.reply(
-            "\n[MASTER ADMIN COMMANDS]\n"+
-            "----------------------------------\n"+
-            helpMessageMaster
-        );
+	_helpMessageDisplay(ctx);
 }
 
 bot.start(init);
@@ -151,7 +142,7 @@ bot.command('admin', (ctx)=>{
 	let pwd = ctx.state.command.args;
 
 	if(pwd == null || pwd.length == 0){
-		ctx.reply("[ERROR] Correct command is: /setadmin <password>");
+		ctx.reply("[ERROR] Correct command is: /admin <password>");
 		return;
 	}
 
@@ -160,10 +151,14 @@ bot.command('admin', (ctx)=>{
 		return;
     }
 
-	pwd_hashed = sha1_hash(pwd);
-    if(getAdminPrivilege(id) == MASTER) ctx.reply(pwd+" "+pwd_hashed);
+    //Retrieve data in case
+    data.retrieve("admins",ctx); data.retrieve("passwords",ctx);
 
-	if(passwords.hasOwnProperty(pwd_hashed)){
+    //Hash password and compare to see if valid
+	pwd_hashed = sha1_hash(pwd);
+    _log(pwd+" "+pwd_hashed);
+
+	if(data.passwords.hasOwnProperty(pwd_hashed)){
 		return setAdmin(ctx, id, _getName(ctx), pwd_hashed);
 	}
     else return ctx.reply("[INFO] Incorrect Password!");
@@ -171,7 +166,7 @@ bot.command('admin', (ctx)=>{
 
 //Check if person is admin
 isAdmin = (_id)=>{
-    return admins.hasOwnProperty(_id);
+    return data.admins.hasOwnProperty(_id);
 }
 
 //Return admin privilege:
@@ -202,12 +197,16 @@ setAdmin = (ctx, _id, _name, _hashedPassword)=>{
         "password":_hashedPassword
 	};
 
-    saveAdmins(ctx);
+    data.save("admins",ctx);
 
-    return ctx.reply(_name+" is now "+((_privilege)?"an":"a master")+" admin!");
+    if(_privilege == MASTER){
+        return ctx.reply(_name+" is now "+((_privilege>=getAdminPrivilege(_id))?"promoted to ":" ")+"a master admin!");
+    }
+    else{
+        let group = "<temp>";
+        return ctx.reply(_name+" is now an admin for group "+group+"!");
+    }
 }
-
-//[Master] Set admin
 
 //================LEADERBOARD SETUP=================//
 /* Master admin sets up leaderboard:
@@ -218,272 +217,114 @@ _generatePassword = (_len)=>{
 
     if(_len == null || _len == undefined || typeof len == "undefined" || isNaN(_len) || _len < 8) _len = 8;
 
-    pwd = [];
+    let pwd = [], pwd_ok = false, pwd_hashed;
 
-    for(var i=0;i<_len;i++){
-        var _rand = getRandomInt(0,charset.length-1);
-        pwd.push(charset[_rand]);
+    while(!pwd_ok){
+        for(i=0;i<1000;i++){ //try max 1000 times
+            for(var i=0;i<_len;i++){
+                var _rand = getRandomInt(0,charset.length-1);
+                pwd.push(charset[_rand]);
+            }
+
+            pwd = pwd.join("");
+            pwd_hashed = sha1_hash(pwd);
+
+            if( !data.passwords.hasOwnProperty(pwd_hashed) ){ //check if password is unique
+                pwd_ok = true;
+                break;
+            }
+        }
+        _len++; //if it doesnt work try adding to the length and try again
     }
 
-    pwd = pwd.join("");
-
-    return {"raw":pwd, "hashed":sha1_hash(pwd)};
+    return {"raw":pwd, "hashed":pwd_hashed};
 }
 
 //================ACTUAL LEADERBOARD HANDLING=================//
 //Initialise Current Game object
 let scores = {};
 
+//Must be added from group
 bot.command("newleaderboard",(ctx)=>{
     let _id = ctx.message.from.id;
 
-    if(getAdminPrivilege(_id)!=MASTER){
-        return ctx.reply("[ERROR] You need to be a master admin to add a new leaderboard");
+    if(ctx.chat.type=="private"){
+        return ctx.reply("[ERROR] You need to add a new leaderboard in a GROUP/CHANNEL!");
     }
+
+    data.retrieveAll(ctx); //retrieve here because bot might not have retrieved data (rmb we are in private chat) yet.
+
+    if(getAdminPrivilege(_id)!=MASTER){
+        return ctx.reply("[ERROR] You need to be a master admin to add a new leaderboard!");
+    }
+
+    if( data.leaderboards.hasOwnProperty(ctx.chat.id) ){
+        return ctx.reply("[ERROR] Leaderboard has already been linked to this group. /deleteleaderboard first.");
+    }
+
+    //Generate password for this particular leaderboard/Telegram group
+    _pwdObj = _generatePassword(10);
+
+    _log(ctx.chat.id+" "+ctx.chat.username+" "+ctx.chat.first_name+" "+ctx.chat.last_name);
+    _log(JSON.stringify(ctx.chat));
+
+    //Add to the leaderboards
+    data.leaderboards[ctx.chat.id] = {
+        "password": _pwdObj.hashed,
+        "groups":[] //array of group objects { name, points }
+    }
+
+    //Add to the password objects
+    data.passwords[_pwdObj.hashed] = {
+        "level":NORMAL, //admin
+        "group":ctx.chat.id //telegram group id
+    }
+
+    //Send private message to
+    ctx.telegram.sendMessage(
+        ctx.message.from.id,
+        "🎉 📊 BRMC Games Leaderboard 📊 🎉 \n"+
+        "The password for the group "+ctx.chat.username+" is:\n"+
+        _pwdObj.raw+"\n\n"+
+        "Remember to tell your admins to send /admin "+_pwdObj.raw+" in the private @brmcgamesleaderboardbot chat to activate their admin privileges for this group."
+    );
+
+    ctx.telegram.sendMessage(
+        ctx.message.from.id,
+        "/admin "+_pwdObj.raw
+    );
+
+    data.saveAll(ctx);
 });
-
-/*
-//Displaying of scores
-displayScores = (ctx)=>{
-	let scoreboardText = "";
-	let scoreboardArr = [];
-
-	//Push all stored info from `Game.leaderboard` into `scoreboardArr`
-	for(i in Game.leaderboard){
-		if(!Game.leaderboard.hasOwnProperty(i)) continue;
-
-		scoreboardArr.push(Game.leaderboard[i]);
-	}
-
-	//Handler for when nobody played but the game is stopped
-	if(scoreboardArr.length==0){
-		return ctx.reply(
-			"⁉️ <b>Everybody's a winner?!?</b> ⁉️\n(\'cos nobody played... 😞)",
-			Extra.HTML().markup(
-				Markup.keyboard([
-					["🏁 Start Game! 🏁"],
-					["🕐 Quick Game! 🕐","❓ Help ❓"]
-					//,["🛑 Stop Game! 🛑"]
-					,["📊 Ranking 📊"]
-				])
-				.oneTime().resize()
-			)
-		);
-	}
-
-	//Sort the top scorers from `scoreboardArr` in descending order (highest score first)
-	scoreboardArr.sort(function(a,b){
-		return b.score - a.score;
-	});
-
-	//Generate the output text...
-	//Also set the global rankings for each user
-	for(i=0;i<scoreboardArr.length;i++){
-		scoreboardText+="<b>"+parseInt(i+1)+". "+scoreboardArr[i].name+"</b> <i>("+scoreboardArr[i].score+" points)</i>\n";
-
-		//ctx.reply("DEBUG: Updating scoreboard for user "+scoreboardArr[i].id);
-		_setRanking(scoreboardArr[i].id, scoreboardArr[i].score, ctx);
-	}
-
-	//Show the top scorers with a keyboard to start the game
-	return ctx.reply(
-		"🏆 <b>Top Scorers</b> 🏆\n"+
-		scoreboardText+
-		"\n\nView global /ranking | /start a new game",
-		Extra.HTML().markup(
-			Markup.keyboard([
-				["🏁 Start Game! 🏁"],
-				["🕐 Quick Game! 🕐","❓ Help ❓"]
-				//["🛑 Stop Game! 🛑"]
-				,["📊 Ranking 📊"]
-			])
-			.oneTime().resize()
-		)
-	);
-}
-*/
-/*
-//================LEADERBOARD=================//
-_getGlobalRanking = ()=>{
-	//Check if file exists; if not, create it to prevent problems with access permissions
-	if(!fs.existsSync("leaderboard.json")){
-		//ctx.reply("DEBUG: leaderboard.json doesn't exist... creating file..");
-
-		fs.writeFileSync(
-			'leaderboard.json',
-			JSON.stringify(Game.global_leaderboard,null,2)
-		);
-
-		//ctx.reply("DEBUG: File created!");
-		return Game.global_leaderboard;
-	}
-
-	//Retrieve data from leaderboard.json
-	return Game.global_leaderboard = JSON.parse(fs.readFileSync('leaderboard.json', 'utf8'));
-}
-
-//--Get ranking of individual user by `user_id`
-_getRanking = (user_id, ctx)=>{
-	//First retrieve array data from leaderboard.json
-	_getGlobalRanking();
-
-	//ctx.reply("DEBUG _getRanking: "+JSON.stringify(Game.global_leaderboard,null,2));
-	//ctx.reply\("DEBUG _getRanking id="+user_id);
-
-	if(user_id == null || typeof user_id == "undefined") return;
-
-	//Find the user's data in the array
-	let ind = Game.global_leaderboard.findIndex( (item,i)=>{
-		return item.id == user_id;
-	});
-
-	//ctx.reply\("DEBUG _getRanking ind="+ind);
-
-	if(ind == -1){
-		//Data of user doesn't exist:
-		//Add it to the leaderboard array
-		Game.global_leaderboard.push({
-			"id":user_id,
-			"name":Game.leaderboard[user_id].name,
-			"score":0
-		});
-
-		//ctx.reply\("DEBUG: New user: "+Game.global_leaderboard[Game.global_leaderboard.length-1]);
-
-		//Sort and save
-		Game.global_leaderboard.sort(function(a,b){
-			return b.score-a.score;
-		});
-
-		let data = JSON.stringify(Game.global_leaderboard,null,2);
-
-		ctx.reply("Global leaderboard: "+data);
-
-		fs.writeFileSync('leaderboard.json',data);
-
-		ctx.reply("File written for new user "+user_id+", data: "+data);
-
-		//Return new index
-		ind = Game.global_leaderboard.findIndex( (item,i)=>{
-			return item.id == user_id;
-		});
-
-		//ctx.reply\("DEBUG _getRanking: ind = "+ind);
-		return ind;
-	}
-	else{
-		//ctx.reply\("DEBUG _getRanking: ind = "+ind);
-		return ind;
-	}
-}
-
-//--Update leaderboard for user `user_id` with score `score`
-_setRanking = (user_id, score, ctx)=>{
-	if(user_id == null || typeof user_id == "undefined") return;
-
-	let ind = _getRanking(user_id, ctx);
-
-	//Change score
-	if(!isNaN(parseInt(score)) && !isNaN(parseInt(ind))){
-		Game.global_leaderboard[ind].score += score;
-	}
-
-	//Sort and save
-	Game.global_leaderboard.sort(function(a,b){
-		return b.score-a.score;
-	});
-
-	fs.writeFileSync(
-		'leaderboard.json',
-		JSON.stringify(Game.global_leaderboard,null,2)
-	);
-
-	//Return new index
-	return Game.global_leaderboard.findIndex( (item,i)=>{
-		return item.id == user_id;
-	});
-}
-
-//--TODO: Set multiple rankings at once to save time on constantly sorting
-_setRankingMultiple = (obj)=>{
-
-}
-
-_showRanking = (ctx)=>{
-	let ind = _getRanking(ctx.message.from.id, ctx);
-		//Note that `Game.global_leaderboard` is already updated in the `_getGlobalRanking()` function embedded in `_getRanking()`
-
-	let leaderboardText = '';
-	for(i=0;i<Math.min(Game.global_leaderboard.length,20);i++){
-		if(ind == i) leaderboardText += "👉 ";
-
-		switch(i){
-			case 0:
-				leaderboardText+="🥇 ";
-				break;
-			case 1:
-				leaderboardText+="🥈 ";
-				break;
-			case 2:
-				leaderboardText+="🥉 ";
-				break;
-			default:
-				leaderboardText+="<b>"+parseInt(i+1)+".</b> ";
-		}
-
-			leaderboardText+="<b>"+Game.global_leaderboard[i].name+"</b> ";
-			//if(ind == i) leaderboardText+="<b>";
-				leaderboardText+="<i>("+Game.global_leaderboard[i].score+" points)</i>";
-			//if(ind == i) leaderboardText+="</b>";
-
-		if(ind == i) leaderboardText += " 👈";
-
-		leaderboardText += "\n";
-	}
-
-	//User is not part of the top 20
-	if(ind>=20){
-		leaderboardText += "<b>👉 "+Game.global_leaderboard[ind].name+" <i>("+Game.global_leaderboard[ind].score+" points)</i> 👈</b>";
-	}
-
-	ctx.reply(
-		"🏆 <b>Global Ranking</b> 🏆\n"+
-		"<b>----------------------------------</b>\n"+
-		leaderboardText,
-		Extra.HTML().inReplyTo(ctx.message.message_id)
-	);
-}
-
-bot.hears('/show_ranking', (ctx)=>{
-	if(ctx.message.from.id != 413007985){
-		//if it isn't the admin's (mine, Samuel Leong's) telegram ID, return
-		_showRanking(ctx);
-		return;
-	}
-
-	_getGlobalRanking();
-
-	ctx.reply(
-		"ADMIN DEBUG! Displaying entire ranking for saving...\n"+
-		"==========================\n"+
-		JSON.stringify(Game.global_leaderboard,null,2)
-	);
-});
-*/
 
 //================MISC COMMANDS=================//
 //Help Command
 bot.command('help', (ctx) => {
-	ctx.reply(helpMessage);
+	_helpMessageDisplay(ctx);
 });
 bot.hears("❓ Help ❓", (ctx)=>{
-	ctx.reply(helpMessage);
+	_helpMessageDisplay(ctx);
 });
+
+//Help Message
+_helpMessageDisplay = (ctx)=>{
+    ctx.reply(helpMessage);
+
+    ctx.reply(commandsMessage);
+
+    if( getAdminPrivilege(ctx.message.chat.id) ){
+        return ctx.reply(
+            "\n[MASTER ADMIN COMMANDS]\n"+
+            "---------------------------------------\n"+
+            commandsMasterMessage
+        );
+    }
+}
 
 //Display debug messages
 _log = (ctx, msg)=>{
     //console.log("[DEBUG] "+msg);
-    if(getAdminPrivilege(ctx.message.from.id)==0) _log(ctx,""+msg);
+    if(getAdminPrivilege(ctx.message.from.id)==MASTER) ctx.reply("[DEBUG] "+msg);
 }
 
 //Get user's name from ctx
