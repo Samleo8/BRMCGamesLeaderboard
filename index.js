@@ -76,8 +76,11 @@ let data = {
     "leaderboards":{},
     "passwords":{  //SHA-1 hashed
         "c9d19f7b00d8cb12425fdcdc3f86717f0736c7b5":{ //Master admin
-            "level":MASTER, //master
-            "group":0 //master
+            "level": MASTER, //master
+            "group":{
+                "id": 0, //master
+                "name":"all"
+            }
         }
     },
 
@@ -88,17 +91,21 @@ let data = {
 
             fs.writeFileSync(
                 dataStr+".json",
-                JSON.stringify(data["dataStr"],null,4)
+                JSON.stringify(data[dataStr],null,4)
             );
 
             _log(ctx,"File "+dataStr+".json created!");
             return this[dataStr];
         }
 
+        _log(ctx, "Retrieving "+dataStr);
+
         //Retrieve data from leaderboard.json
-        return this[dataStr] = JSON.parse(
+        this[dataStr] = JSON.parse(
             fs.readFileSync(dataStr+".json", 'utf8')
         );
+
+        return this[dataStr];
     },
     "retrieveAll":function(ctx){
         this.retrieve("admins",ctx);
@@ -128,7 +135,7 @@ init = (ctx)=>{
 	_helpMessageDisplay(ctx);
 }
 
-bot.start(init);
+bot.command('start', (ctx)=>{ init(ctx); } );
 
 //================ADMIN HANDLING=================//
 /*Array of JSON objects containing:
@@ -149,8 +156,12 @@ bot.command('admin', (ctx)=>{
         return ctx.reply("[ERROR] Only humans can access admin rights.");
     }
 
+    ctx.reply("Retrieving data?");
+
     //Retrieve data in case
-    //data.retrieveAll(ctx);
+    data.retrieveAll(ctx);
+
+    ctx.reply("Retrieved data:\n"+JSON.stringify(data.admins,null,4));
 
     //Hash password and compare to see if valid
 	let pwd_hashed = sha1_hash(pwd);
@@ -180,9 +191,11 @@ getAdminPrivilege = (_id)=>{
 
 //Set admin by details
 setAdmin = (ctx, _id, _name, _hashedPassword)=>{
-    ctx.reply("Setting admin rights for "+_getName(ctx)+":");
+    ctx.reply("Setting admin rights for "+_name+":");
 
     let _privilege = data.passwords[_hashedPassword].level;
+
+    _log(ctx,_id)
 
     if( isAdmin(_id) && _privilege>=getAdminPrivilege(_id)){
         //Already admin, no promotion
@@ -201,7 +214,7 @@ setAdmin = (ctx, _id, _name, _hashedPassword)=>{
         return ctx.reply(_name+" is now "+((_privilege>=getAdminPrivilege(_id))?"promoted to ":" ")+"a master admin!");
     }
     else{
-        let group = "<temp>";
+        let group = data.passwords[_hashedPassword].groupID;
         return ctx.reply(_name+" is now an admin for group "+group+"!");
     }
 }
@@ -243,7 +256,7 @@ _generatePassword = (_len)=>{
 let scores = {};
 
 //Must be added from group
-bot.command("newleaderboard",(ctx)=>{
+bot.command("newleaderboard", (ctx)=>{
     let _id = ctx.message.from.id;
 
     if(ctx.chat.type=="private"){
@@ -263,7 +276,6 @@ bot.command("newleaderboard",(ctx)=>{
     //Generate password for this particular leaderboard/Telegram group
     _pwdObj = _generatePassword(10);
 
-    _log(ctx,ctx.chat.id+" "+ctx.chat.username+" "+ctx.chat.first_name+" "+ctx.chat.last_name);
     _log(ctx,JSON.stringify(ctx.chat));
 
     //Add to the leaderboards
@@ -275,7 +287,10 @@ bot.command("newleaderboard",(ctx)=>{
     //Add to the password objects
     data.passwords[_pwdObj.hashed] = {
         "level":NORMAL, //admin
-        "group":ctx.chat.id //telegram group id
+        "group":{
+            "id": ctx.chat.id, //telegram group id [note: negative number]
+            "name":ctx.chat.title //telegram group name
+        }
     }
 
     //Send private message to
@@ -306,23 +321,22 @@ bot.hears("❓ Help ❓", (ctx)=>{
 
 //Help Message
 _helpMessageDisplay = (ctx)=>{
-    ctx.reply(helpMessage);
+    let msg = helpMessage;
+    msg+=commandsMessage;
 
-    ctx.reply(commandsMessage);
-
-    if( getAdminPrivilege(ctx.message.chat.id) ){
-        return ctx.reply(
-            "\n[MASTER ADMIN COMMANDS]\n"+
-            "---------------------------------------\n"+
-            commandsMasterMessage
-        );
+    if( getAdminPrivilege(ctx.message.chat.id) == MASTER ){
+        msg+="\n[MASTER ADMIN COMMANDS]\n"+
+             "---------------------------------------\n"+
+             commandsMasterMessage
     }
+
+    return ctx.reply(msg);
 }
 
 //Display debug messages
 _log = (ctx, msg)=>{
     //console.log("[DEBUG] "+msg);
-    //if(getAdminPrivilege(ctx.message.from.id)==MASTER) ctx.reply("[DEBUG] "+msg);
+    if(getAdminPrivilege(ctx.message.from.id)==MASTER) ctx.reply("[DEBUG] "+msg);
 }
 
 //Get user's name from ctx
