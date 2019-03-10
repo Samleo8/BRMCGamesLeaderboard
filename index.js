@@ -98,8 +98,6 @@ let data = {
             return this[dataStr];
         }
 
-        _log(ctx, "Retrieving "+dataStr);
-
         //Retrieve data from leaderboard.json
         this[dataStr] = JSON.parse(
             fs.readFileSync(dataStr+".json", 'utf8')
@@ -197,10 +195,12 @@ setAdmin = (ctx, _id, _name, _hashedPassword)=>{
 
     _log(ctx,_id)
 
-    if( isAdmin(_id) && _privilege>=getAdminPrivilege(_id)){
+	/* //Disable promotion check for debugging
+    if( isAdmin(_id) && _privilege>getAdminPrivilege(_id)){
         //Already admin, no promotion
-        return ctx.reply("[ERROR] "+_name+" is already an admin.");
+        return ctx.reply("[ERROR] "+_name+" is already a master admin.");
     }
+	//*/
 
 	data.admins[_id] = {
 		"name":_name,
