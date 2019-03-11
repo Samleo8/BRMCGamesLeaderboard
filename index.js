@@ -306,7 +306,8 @@ bot.command("newleaderboard", (ctx)=>{
     if( data.leaderboards.hasOwnProperty(ctx.chat.id) ){
         return ctx.reply(
 			"[ERROR] Leaderboard has already been linked to this group. /deleteleaderboard first.",
-			Extra.inReplyTo(ctx.message.message_id));
+			Extra.inReplyTo(ctx.message.message_id)
+		);
     }
 
     //Generate password for this particular leaderboard/Telegram group
@@ -417,7 +418,7 @@ _helpMessageDisplay = (ctx)=>{
     msg+= commandsMessage+"\n"
 		 +commandsAdminMessage+"\n";
 
-    if(  == MASTER ){
+    if(priv == MASTER){
         msg+=commandsMasterMessage+"\n";
     }
 
@@ -428,7 +429,7 @@ _helpMessageDisplay = (ctx)=>{
 		case MASTER:
 			msg+="Master";
 		case NORMAL:
-			msg+="Admin (Telegram Group \""+ctx.message.from.id+"\")";
+			msg+="Admin (Telegram Group \""+getAdminLeaderboard(ctx.message.from.id).name+"\")";
 	}
 
     return ctx.reply(msg);
