@@ -51,6 +51,7 @@ sha1_hash = (input)=>{
 const commandParts = require('telegraf-command-parts');
 bot.use(commandParts());
 
+//Help messages
 const helpMessage =
 "This bot controls the live leaderboard for BRMC Camp Games. Most commands are admin only. To activate your admin privileges, type in /admin followed by the password given to you.\n\n";
 
@@ -61,11 +62,14 @@ const commandsMessage =
 
 const commandsAdminMessage =
 "/update - Update group scores [admin].\n"+
-"/newgroup - Create a new group with score 0 [admin].\n";
+"/newgroup <group name> - Create a new group with score 0 [admin].\n";
 
 const commandsMasterMessage =
 "/newleaderboard - Creates a new leaderboard. Command MUST be given in the Telegram group/channel that is is linked to. Generates passcode for that leaderboard to be given to admins [master].\n"+
 "/deleteleaderboard - Delete a leaderboard [master].\n";
+
+//Fancy title
+const FANCY_TITLE = "🎉 📊 BRMC Games Leaderboard 📊 🎉 \n";
 
 let i = 0, j = 0;
 
@@ -119,7 +123,7 @@ let data = {
             JSON.stringify(this[dataStr],null,4)
         );
 
-        _log(ctx,"Saved "+dataStr+" data: "+JSON.stringify(this[dataStr],null,4));
+        //_log(ctx,"Saved "+dataStr+" data: "+JSON.stringify(this[dataStr],null,4));
     },
     "saveAll":function(ctx){
         this.save("admins",ctx);
@@ -291,7 +295,7 @@ bot.command("newleaderboard", (ctx)=>{
     //Send private message to
     ctx.telegram.sendMessage(
         ctx.message.from.id,
-        "🎉 📊 BRMC Games Leaderboard 📊 🎉 \n"+
+        FANCY_TITLE+
         "The password for the group "+ctx.chat.username+" is:\n"+
         _pwdObj.raw+"\n\n"+
         "Remember to tell your admins to send /admin "+_pwdObj.raw+" in the private @brmcgamesleaderboardbot chat to activate their admin privileges for this group."
@@ -306,8 +310,28 @@ bot.command("newleaderboard", (ctx)=>{
 });
 
 //================LEADERBOARD GROUP HANDLING=================//
-bot.command("newgroup", (ctx)=>{
+bot.command("show", (ctx)=>{
 
+});
+
+bot.command("newgroup", (ctx)=>{
+	grpName = ctx.state.command.args;
+
+	//Retrive data first
+	data.retrieveAll(ctx);
+
+	let id = ctx.message.from.id;
+	let priv = getAdminPrivilege(id);
+
+	if(priv == MASTER){
+		ctx.reply("As a master admin, you have access to all leaderboards.");
+		//TODO: allow to master admin to modify leaderboard
+		ctx.reply("Sorry I can\'t tell which leaderboard you want to add the group to");
+		return;
+	}
+	if(priv == NORMAL){
+		ctx.reply(FANCY_TITLE+"Name of group?", );
+	}
 });
 
 //================MISC COMMANDS=================//
@@ -351,6 +375,10 @@ _getName = (ctx)=>{
 
     return last_name;
 }
+
+//================BOT HEARS==================//
+//Needs to be here because otherwise all the other commands won't run
+
 
 //================EXPORT BOT=================//
 module.exports = bot;
