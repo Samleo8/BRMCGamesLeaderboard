@@ -55,11 +55,13 @@ const helpMessage =
 "This bot controls the live leaderboard for BRMC Camp Games. Most commands are admin only. To activate your admin privileges, type in /admin followed by the password given to you.\n\n";
 
 const commandsMessage =
-"/show - Show current scores.\n"+
+"/help - Displays this help message.\n"+
 "/admin <password> - Makes the current user (i.e. you) admin of the group whose password has been given to you. DO THIS ONLY IN THE PRIVATE CHAT\n"+
+"/show - Show current scores.\n";
+
+const commandsAdminMessage =
 "/update - Update group scores [admin].\n"+
-"/newgroup - Create a new group with score 0 [admin].\n"+
-"/help - Displays this help message.\n";
+"/newgroup - Create a new group with score 0 [admin].\n";
 
 const commandsMasterMessage =
 "/newleaderboard - Creates a new leaderboard. Command MUST be given in the Telegram group/channel that is is linked to. Generates passcode for that leaderboard to be given to admins [master].\n"+
@@ -154,12 +156,8 @@ bot.command('admin', (ctx)=>{
         return ctx.reply("[ERROR] Only humans can access admin rights.");
     }
 
-    ctx.reply("Retrieving data?");
-
     //Retrieve data in case
     data.retrieveAll(ctx);
-
-    ctx.reply("Retrieved data:\n"+JSON.stringify(data.admins,null,4));
 
     //Hash password and compare to see if valid
 	let pwd_hashed = sha1_hash(pwd);
@@ -193,8 +191,6 @@ setAdmin = (ctx, _id, _name, _hashedPassword)=>{
 
     let _privilege = data.passwords[_hashedPassword].level;
 
-    _log(ctx,_id)
-
 	/* //Disable promotion check for debugging
     if( isAdmin(_id) && _privilege>getAdminPrivilege(_id)){
         //Already admin, no promotion
@@ -214,8 +210,8 @@ setAdmin = (ctx, _id, _name, _hashedPassword)=>{
         return ctx.reply(_name+" is now "+((_privilege>=getAdminPrivilege(_id))?"promoted to ":" ")+"a master admin!");
     }
     else{
-        let group = data.passwords[_hashedPassword].groupID;
-        return ctx.reply(_name+" is now an admin for group "+group+"!");
+        let group = data.passwords[_hashedPassword].group.name;
+        return ctx.reply(_name+" is now an admin for group "+group+"!\n\n"+commandsAdminMessage);
     }
 }
 
@@ -251,7 +247,6 @@ _generatePassword = (_len)=>{
     return {"raw":pwd, "hashed":pwd_hashed};
 }
 
-//================ACTUAL LEADERBOARD HANDLING=================//
 //Initialise Current Game object
 let scores = {};
 
@@ -310,6 +305,11 @@ bot.command("newleaderboard", (ctx)=>{
     data.saveAll(ctx);
 });
 
+//================LEADERBOARD GROUP HANDLING=================//
+bot.command("newgroup", (ctx)=>{
+
+});
+
 //================MISC COMMANDS=================//
 //Help Command
 bot.command('help', (ctx) => {
@@ -322,7 +322,7 @@ bot.hears("❓ Help ❓", (ctx)=>{
 //Help Message
 _helpMessageDisplay = (ctx)=>{
     let msg = helpMessage;
-    msg+=commandsMessage;
+    msg+=commandsMessage+commandsAdminMessage;
 
     if( getAdminPrivilege(ctx.message.chat.id) == MASTER ){
         msg+="\n[MASTER ADMIN COMMANDS]\n"+
