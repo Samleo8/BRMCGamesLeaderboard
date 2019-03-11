@@ -57,7 +57,7 @@ const helpMessage =
 
 const commandsMessage =
 "/help - Displays this help message.\n"+
-"/admin <password> - Makes the current user (i.e. you) admin of the group whose password has been given to you. DO THIS ONLY IN THE PRIVATE CHAT\n"+
+"/admin <password> - Makes the current user (i.e. you) admin of the group whose password has been given to you. DO THIS ONLY IN THE PRIVATE CHAT!\n"+
 "/show - Show current scores.\n";
 
 const commandsAdminMessage =
@@ -153,11 +153,17 @@ bot.command('admin', (ctx)=>{
 	let pwd = ctx.state.command.args;
 
 	if(pwd == null || pwd.length == 0){
-		return ctx.reply("[ERROR] Correct command is: /admin <password>");
+		return ctx.reply(
+			"[ERROR] Correct command is: /admin <password>",
+			Extra.inReplyTo(ctx.message.message_id)
+		);
 	}
 
     if(ctx.message.from.is_bot){
-        return ctx.reply("[ERROR] Only humans can access admin rights.");
+        return ctx.reply(
+			"[ERROR] Only humans can access admin rights.",
+			Extra.inReplyTo(ctx.message.message_id)
+		);
     }
 
     //Retrieve data in case
@@ -168,9 +174,18 @@ bot.command('admin', (ctx)=>{
     _log(ctx,pwd+" "+pwd_hashed);
 
 	if(data.passwords.hasOwnProperty(pwd_hashed)){
-		return setAdmin(ctx, id, _getName(ctx), pwd_hashed);
+		setAdmin(ctx, id, _getName(ctx), pwd_hashed);
+
+		//Show the help message
+		let _helpMsg = commandsAdminMessage+((getAdminPrivilege(id)==MASTER)?commandsMasterMessage:"");
+		ctx.reply(_helpMsg);
+		return;
 	}
-    else return ctx.reply("[INFO] Incorrect Password!");
+    else
+		return ctx.reply(
+			"[INFO] Incorrect Password!",
+			Extra.inReplyTo(ctx.message.message_id)
+		);
 });
 
 //Check if person is admin
@@ -189,6 +204,19 @@ getAdminPrivilege = (_id)=>{
     return data.admins[_id].level;
 }
 
+//Return group obj that the admin is in charge of:
+/*
+    -1 - non-admin
+	0 - master admin
+*/
+getAdminGroup = (_id)=>{
+	let priv = getAdminPrivilege(_id);
+
+    if(priv == -1 || priv == 0) return priv;
+
+	return data.admins[_id].group;
+}
+
 //Set admin by details
 setAdmin = (ctx, _id, _name, _hashedPassword)=>{
     ctx.reply("Setting admin rights for "+_name+":");
@@ -202,21 +230,22 @@ setAdmin = (ctx, _id, _name, _hashedPassword)=>{
     }
 	//*/
 
+    if(_privilege == MASTER){
+        ctx.reply(_name+" is now "+((_privilege>=getAdminPrivilege(_id))?"promoted to ":" ")+"a master admin!\n");
+    }
+    else{
+        let groupName = data.passwords[_hashedPassword].group.name;
+        ctx.reply(_name+" is now an admin for group "+group+"!\n\n"+commandsAdminMessage);
+    }
+
 	data.admins[_id] = {
 		"name":_name,
 		"level":_privilege,
-        "password":_hashedPassword
+        "password":_hashedPassword,
+		"group": data.passwords[_hashedPassword].group
 	};
 
     data.save("admins",ctx);
-
-    if(_privilege == MASTER){
-        return ctx.reply(_name+" is now "+((_privilege>=getAdminPrivilege(_id))?"promoted to ":" ")+"a master admin!");
-    }
-    else{
-        let group = data.passwords[_hashedPassword].group.name;
-        return ctx.reply(_name+" is now an admin for group "+group+"!\n\n"+commandsAdminMessage);
-    }
 }
 
 //================LEADERBOARD SETUP=================//
@@ -259,17 +288,25 @@ bot.command("newleaderboard", (ctx)=>{
     let _id = ctx.message.from.id;
 
     if(ctx.chat.type=="private"){
-        return ctx.reply("[ERROR] You need to add a new leaderboard in a GROUP/CHANNEL!");
+        return ctx.reply(
+			"[ERROR] You need to add a new leaderboard in a GROUP/CHANNEL!",
+			Extra.inReplyTo(ctx.message.message_id)
+		);
     }
 
     data.retrieveAll(ctx); //retrieve here because bot might not have retrieved data (rmb we are in private chat) yet.
 
     if(getAdminPrivilege(_id)!=MASTER){
-        return ctx.reply("[ERROR] You need to be a master admin to add a new leaderboard!");
+        return ctx.reply(
+			"[ERROR] You need to be a master admin to add a new leaderboard!",
+			Extra.inReplyTo(ctx.message.message_id)
+		);
     }
 
     if( data.leaderboards.hasOwnProperty(ctx.chat.id) ){
-        return ctx.reply("[ERROR] Leaderboard has already been linked to this group. /deleteleaderboard first.");
+        return ctx.reply(
+			"[ERROR] Leaderboard has already been linked to this group. /deleteleaderboard first.",
+			Extra.inReplyTo(ctx.message.message_id));
     }
 
     //Generate password for this particular leaderboard/Telegram group
@@ -315,7 +352,12 @@ bot.command("show", (ctx)=>{
 });
 
 bot.command("newgroup", (ctx)=>{
+	//TODO: Support for multiple groups
 	grpName = ctx.state.command.args;
+
+	if(grpName == null || grpName == undefined || grpName.length<=0){
+
+	}
 
 	//Retrive data first
 	data.retrieveAll(ctx);
@@ -329,10 +371,19 @@ bot.command("newgroup", (ctx)=>{
 		ctx.reply("Sorry I can\'t tell which leaderboard you want to add the group to");
 		return;
 	}
-	if(priv == NORMAL){
-		ctx.reply(FANCY_TITLE+"Name of group?", );
+	else if(priv == -1){ //not admin
+		ctx.reply(
+			"Only admins can add groups! Activate your admin privileges using /admin <password>",
+			Extra.inReplyTo(ctx.message.message_id)
+		);
 	}
+
+
 });
+
+bot.command("newgroups", (ctx)=>{
+
+})
 
 //================MISC COMMANDS=================//
 //Help Command
@@ -345,14 +396,27 @@ bot.hears("❓ Help ❓", (ctx)=>{
 
 //Help Message
 _helpMessageDisplay = (ctx)=>{
-    let msg = helpMessage;
-    msg+=commandsMessage+commandsAdminMessage;
+	data.retrieve("admin", ctx);
 
-    if( getAdminPrivilege(ctx.message.chat.id) == MASTER ){
-        msg+="\n[MASTER ADMIN COMMANDS]\n"+
-             "---------------------------------------\n"+
-             commandsMasterMessage
+	let priv = getAdminPrivilege(ctx.message.from.id);
+
+    let msg = helpMessage;
+    msg+= commandsMessage+"\n"
+		 +commandsAdminMessage+"\n";
+
+    if(  == MASTER ){
+        msg+=commandsMasterMessage+"\n";
     }
+
+	msg+="\n[ADMIN STATUS]: ";
+	switch(priv){
+		case -1:
+			msg+="None";
+		case MASTER:
+			msg+="Master";
+		case NORMAL:
+			msg+="Admin (Telegram Group \""+ctx.message.from.id+"\")";
+	}
 
     return ctx.reply(msg);
 }
