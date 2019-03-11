@@ -368,7 +368,7 @@ bot.command("newgroup", (ctx)=>{
 	if(grpName == null || grpName == undefined || grpName.length<=0){
 		ctx.reply(
 			"[ERROR] Please enter a group name",
-			Extra.inReplyTo(ctx.message.message_id);
+			Extra.inReplyTo(ctx.message.message_id)
 		);
 	}
 
