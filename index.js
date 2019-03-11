@@ -352,7 +352,13 @@ bot.command("show", (ctx)=>{
 });
 
 newGroup = (ctx, name, id)=>{
+	//TODO: Make object with index by name
+	let grp = {
+		"name":name,
+		"score":0
+	}
 
+	data.leaderboards.groups.push(grp);
 }
 
 bot.command("newgroup", (ctx)=>{
