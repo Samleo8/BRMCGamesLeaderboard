@@ -83,7 +83,7 @@ let data = {
     "passwords":{  //SHA-1 hashed
         "c9d19f7b00d8cb12425fdcdc3f86717f0736c7b5":{ //Master admin
             "level": MASTER, //master
-            "group":{
+            "leaderboard":{
                 "id": 0, //master
                 "name":"all"
             }
@@ -209,12 +209,12 @@ getAdminPrivilege = (_id)=>{
     -1 - non-admin
 	0 - master admin
 */
-getAdminGroup = (_id)=>{
+getAdminLeaderboard = (_id)=>{
 	let priv = getAdminPrivilege(_id);
 
     if(priv == -1 || priv == 0) return priv;
 
-	return data.admins[_id].group;
+	return data.admins[_id].leaderboard;
 }
 
 //Set admin by details
@@ -234,7 +234,7 @@ setAdmin = (ctx, _id, _name, _hashedPassword)=>{
         ctx.reply(_name+" is now "+((_privilege>=getAdminPrivilege(_id))?"promoted to ":" ")+"a master admin!\n");
     }
     else{
-        let groupName = data.passwords[_hashedPassword].group.name;
+        let groupName = data.passwords[_hashedPassword].leaderboard.name;
         ctx.reply(_name+" is now an admin for group "+group+"!\n\n"+commandsAdminMessage);
     }
 
@@ -242,7 +242,7 @@ setAdmin = (ctx, _id, _name, _hashedPassword)=>{
 		"name":_name,
 		"level":_privilege,
         "password":_hashedPassword,
-		"group": data.passwords[_hashedPassword].group
+		"leaderboard": data.passwords[_hashedPassword].leaderboard
 	};
 
     data.save("admins",ctx);
@@ -323,7 +323,7 @@ bot.command("newleaderboard", (ctx)=>{
     //Add to the password objects
     data.passwords[_pwdObj.hashed] = {
         "level":NORMAL, //admin
-        "group":{
+        "leaderboard":{
             "id": ctx.chat.id, //telegram group id [note: negative number]
             "name":ctx.chat.title //telegram group name
         }
@@ -351,12 +351,19 @@ bot.command("show", (ctx)=>{
 
 });
 
+newGroup = (ctx, name, id)=>{
+
+}
+
 bot.command("newgroup", (ctx)=>{
 	//TODO: Support for multiple groups
 	grpName = ctx.state.command.args;
 
 	if(grpName == null || grpName == undefined || grpName.length<=0){
-
+		ctx.reply(
+			"[ERROR] Please enter a group name",
+			Extra.inReplyTo(ctx.message.message_id);
+		);
 	}
 
 	//Retrive data first
@@ -378,7 +385,7 @@ bot.command("newgroup", (ctx)=>{
 		);
 	}
 
-
+	newGroup(ctx, grpName, id);
 });
 
 bot.command("newgroups", (ctx)=>{
