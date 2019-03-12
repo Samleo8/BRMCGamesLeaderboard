@@ -352,14 +352,32 @@ bot.command("show", (ctx)=>{
 
 });
 
-newGroup = (ctx, name, id)=>{
+newGroup = (ctx, name, user_id)=>{
 	//TODO: Make object with index by name
-	let grp = {
-		"name":name,
-		"score":0
+	let leaderboard = data.admins[user_id].leaderboard;
+	let hashed_name = sha1_hash(name); //avoid problems with spaces and other random characters
+
+	let grpArr = data.leaderboards[leaderboard.id].groups;
+
+	if(grpArr.hasOwnProperty(hashed_name)){
+		ctx.reply(
+			"[ERROR] Group with this name has already been added. To delete the group or update scores, use /deletegroup or /update",
+			Extra.inReplyTo(ctx.message.message_id);
+		);
+	}
+	else{
+		grpArr[hashed_name] = {
+			"leaderboard":leaderboard.id,
+			"name":name,
+			"hashed_name":hashed_name
+			"score":0
+		};
 	}
 
-	data.leaderboards.groups.push(grp);
+	ctx.reply(
+		"[INFO] Group "+name+" has been added to the leaderboard linked to Telegram Group \""+leaderboard.name+"\"",
+		Extra.inReplyTo(ctx.message.message_id);
+	);
 }
 
 bot.command("newgroup", (ctx)=>{
@@ -426,10 +444,13 @@ _helpMessageDisplay = (ctx)=>{
 	switch(priv){
 		case -1:
 			msg+="None";
+			break;
 		case MASTER:
 			msg+="Master";
+			break;
 		case NORMAL:
 			msg+="Admin (Telegram Group \""+getAdminLeaderboard(ctx.message.from.id).name+"\")";
+			break;
 	}
 
     return ctx.reply(msg);
