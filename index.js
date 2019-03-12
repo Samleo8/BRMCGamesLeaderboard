@@ -219,7 +219,7 @@ getAdminLeaderboard = (_id)=>{
 
 //Set admin by details
 setAdmin = (ctx, _id, _name, _hashedPassword)=>{
-    ctx.reply("Setting admin rights for "+_name+":");
+    //ctx.reply("Setting admin rights for "+_name+":");
 
     let _privilege = data.passwords[_hashedPassword].level;
 
@@ -347,7 +347,7 @@ bot.command("newleaderboard", (ctx)=>{
 	data.saveAll(ctx);
 
 	//Inform user that a leaderboard has been created
-	ctx.reply("[INFO] Leaderboard generated and linked to this Telegram "+ctx.chat.type+".\nThe bot has sent you the admin password in its private chat. Remember to send to your admins!");
+	ctx.reply("[INFO] Leaderboard generated and linked to this Telegram "+ctx.chat.type+". @brmcgamesleaderboardbot has sent you the admin password in its private chat. Remember to forward it to your admins!");
 });
 
 //================LEADERBOARD GROUP HANDLING=================//
