@@ -330,7 +330,7 @@ bot.command("newleaderboard", (ctx)=>{
         }
     }
 
-    //Send private message to
+    //Send private message to user
     ctx.telegram.sendMessage(
         ctx.message.from.id,
         FANCY_TITLE+
@@ -344,7 +344,10 @@ bot.command("newleaderboard", (ctx)=>{
         "/admin "+_pwdObj.raw
     );
 
-    data.saveAll(ctx);
+	data.saveAll(ctx);
+
+	//Inform user that a leaderboard has been created
+	ctx.reply("[INFO] Leaderboard generated and linked to this Telegram "+ctx.chat.type+".\nThe bot has sent you the admin password in its private chat. Remember to send to your admins!");
 });
 
 //================LEADERBOARD GROUP HANDLING=================//
@@ -378,6 +381,8 @@ newGroup = (ctx, name, user_id)=>{
 		"[INFO] Group "+name+" has been added to the leaderboard linked to Telegram Group \""+leaderboard.name+"\"",
 		Extra.inReplyTo(ctx.message.message_id)
 	);
+
+	data.saveAll();
 }
 
 bot.command("newgroup", (ctx)=>{
@@ -385,7 +390,7 @@ bot.command("newgroup", (ctx)=>{
 	grpName = ctx.state.command.args;
 
 	if(grpName == null || grpName == undefined || grpName.length<=0){
-		ctx.reply(
+		return ctx.reply(
 			"[ERROR] Please enter a group name",
 			Extra.inReplyTo(ctx.message.message_id)
 		);
@@ -408,6 +413,7 @@ bot.command("newgroup", (ctx)=>{
 			"Only admins can add groups! Activate your admin privileges using /admin <password>",
 			Extra.inReplyTo(ctx.message.message_id)
 		);
+		return;
 	}
 
 	newGroup(ctx, grpName, id);
