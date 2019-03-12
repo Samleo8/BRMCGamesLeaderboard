@@ -362,7 +362,7 @@ newGroup = (ctx, name, user_id)=>{
 	if(grpArr.hasOwnProperty(hashed_name)){
 		ctx.reply(
 			"[ERROR] Group with this name has already been added. To delete the group or update scores, use /deletegroup or /update",
-			Extra.inReplyTo(ctx.message.message_id);
+			Extra.inReplyTo(ctx.message.message_id)
 		);
 	}
 	else{
@@ -376,7 +376,7 @@ newGroup = (ctx, name, user_id)=>{
 
 	ctx.reply(
 		"[INFO] Group "+name+" has been added to the leaderboard linked to Telegram Group \""+leaderboard.name+"\"",
-		Extra.inReplyTo(ctx.message.message_id);
+		Extra.inReplyTo(ctx.message.message_id)
 	);
 }
 
