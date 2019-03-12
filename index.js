@@ -369,7 +369,7 @@ newGroup = (ctx, name, user_id)=>{
 		grpArr[hashed_name] = {
 			"leaderboard":leaderboard.id,
 			"name":name,
-			"hashed_name":hashed_name
+			"hashed_name":hashed_name,
 			"score":0
 		};
 	}
