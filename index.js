@@ -132,8 +132,20 @@ let data = {
     }
 };
 
+//For checking if bot hears anything, and what is it looking out for
+hearing = {
+	"what": "",
+	"anything": false,
+	"clear": function(){
+		this.what = "";
+		this.anything = false;
+	}
+}
+
 //================INITS=================//
 init = (ctx)=>{
+	hearing.clear();
+
     data.retrieveAll(ctx);
 
 	_helpMessageDisplay(ctx);
@@ -151,6 +163,8 @@ bot.command('start', (ctx)=>{ init(ctx); } );
 bot.command('admin', (ctx)=>{
     let id = ctx.message.from.id;
 	let pwd = ctx.state.command.args;
+
+	hearing.clear();
 
 	if(pwd == null || pwd.length == 0){
 		return ctx.reply(
@@ -285,6 +299,8 @@ let scores = {};
 
 //Must be added from group
 bot.command("newleaderboard", (ctx)=>{
+	hearing.clear();
+
     let _id = ctx.message.from.id;
 
     if(ctx.chat.type=="private"){
@@ -318,7 +334,7 @@ bot.command("newleaderboard", (ctx)=>{
     //Add to the leaderboards
     data.leaderboards[ctx.chat.id] = {
         "password": _pwdObj.hashed,
-        "groups":[] //array of group objects { name, points }
+        "groups":{} //obj of group objects => name:{ leaderboard, name, hashed_name, score }
     }
 
     //Add to the password objects
@@ -352,12 +368,37 @@ bot.command("newleaderboard", (ctx)=>{
 
 //================LEADERBOARD GROUP HANDLING=================//
 bot.command("show", (ctx)=>{
+	hearing.clear();
 
 });
 
-newGroup = (ctx, name, user_id)=>{
-	//TODO: Make object with index by name
-	let leaderboard = data.admins[user_id].leaderboard;
+//--New groups
+newGroup = (ctx, name)=>{
+	//Retrive data first
+	data.retrieveAll(ctx);
+
+	let id = ctx.message.from.id;
+	let priv = getAdminPrivilege(id);
+
+	if(priv == MASTER){
+		ctx.reply("[INFO] As a master admin, you have access to all leaderboards.");
+		//TODO: allow to master admin to modify leaderboard
+		ctx.reply("[ERROR] Sorry I can\'t tell which leaderboard you want to add the group to");
+		return;
+	}
+	else if(priv == -1){ //not admin
+		ctx.reply(
+			"[ERROR] Only admins can add groups! Activate your admin privileges using /admin <password>",
+			Extra.inReplyTo(ctx.message.message_id)
+		);
+		return;
+	}
+
+	//Make object with index by name
+	let _reg = new RegExp("[^A-Z0-9 ]","gi"); //removal of non alphanumeric and non-space characters
+	name.replace(_reg, "");
+
+	let leaderboard = data.admins[id].leaderboard;
 	let hashed_name = sha1_hash(name); //avoid problems with spaces and other random characters
 
 	let grpArr = data.leaderboards[leaderboard.id].groups;
@@ -386,42 +427,37 @@ newGroup = (ctx, name, user_id)=>{
 }
 
 bot.command("newgroup", (ctx)=>{
-	//TODO: Support for multiple groups
-	grpName = ctx.state.command.args;
+	hearing.clear();
 
-	if(grpName == null || grpName == undefined || grpName.length<=0){
-		return ctx.reply(
-			"[ERROR] Please enter a group name",
-			Extra.inReplyTo(ctx.message.message_id)
-		);
-	}
-
-	//Retrive data first
-	data.retrieveAll(ctx);
+	data.retrieve("admin");
 
 	let id = ctx.message.from.id;
 	let priv = getAdminPrivilege(id);
 
-	if(priv == MASTER){
-		ctx.reply("As a master admin, you have access to all leaderboards.");
-		//TODO: allow to master admin to modify leaderboard
-		ctx.reply("Sorry I can\'t tell which leaderboard you want to add the group to");
-		return;
-	}
-	else if(priv == -1){ //not admin
+	if(priv != NORMAL){
 		ctx.reply(
-			"Only admins can add groups! Activate your admin privileges using /admin <password>",
+			"[ERROR] Only specific admins of this leaderboard can add groups! Activate your admin privileges using /admin <password>",
 			Extra.inReplyTo(ctx.message.message_id)
 		);
 		return;
 	}
 
-	newGroup(ctx, grpName, id);
+	grpName = ctx.state.command.args;
+
+	if(grpName == null || grpName == undefined || grpName.length<=0){
+		ctx.reply(
+			"[INFO] Please enter the group name(s). Use /stop to tell the bot you are not adding any more groups\n\nAlternatively, use the command /newgroup <groupname>",
+			Extra.inReplyTo(ctx.message.message_id)
+		);
+		hearing.what = "group_name";
+		return;
+	}
+
+	newGroup(ctx, grpName);
 });
 
-bot.command("newgroups", (ctx)=>{
+//--Update Group Scores
 
-})
 
 //================MISC COMMANDS=================//
 //Help Command
@@ -482,8 +518,32 @@ _getName = (ctx)=>{
 }
 
 //================BOT HEARS==================//
-//Needs to be here because otherwise all the other commands won't run
+bot.command('stop', (ctx)=>{
+	hearing.clear();
+})
 
+//Needs to be here because otherwise all the other commands won't run
+bot.on('message', (ctx)=>{
+	if(!hearing.anything) return;
+
+	let msg = ctx.message.text.toString();
+
+	if(msg != null && msg.length>0){
+		return;
+	}
+
+	switch(hearing.what){
+		case "": case null: case undefined: return;
+		case "group_name":
+			newGroup(ctx, msg);
+			break;
+		case "admin_password":
+			//TODO: Currently command remains as /admin <password>
+			break;
+		default:
+			return;
+	}
+});
 
 //================EXPORT BOT=================//
 module.exports = bot;
