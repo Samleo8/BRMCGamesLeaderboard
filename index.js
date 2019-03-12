@@ -298,7 +298,7 @@ _generatePassword = (_len)=>{
 let scores = {};
 
 //Must be added from group
-bot.command("newleaderboard", (ctx)=>{
+bot.command('newleaderboard', (ctx)=>{
 	hearing.clear();
 
     let _id = ctx.message.from.id;
@@ -367,7 +367,7 @@ bot.command("newleaderboard", (ctx)=>{
 });
 
 //================LEADERBOARD GROUP HANDLING=================//
-bot.command("show", (ctx)=>{
+bot.command('show', (ctx)=>{
 	hearing.clear();
 
 });
@@ -426,7 +426,7 @@ newGroup = (ctx, name)=>{
 	data.saveAll();
 }
 
-bot.command("newgroup", (ctx)=>{
+bot.command('newgroup', (ctx)=>{
 	hearing.clear();
 
 	data.retrieve("admin");
@@ -457,7 +457,11 @@ bot.command("newgroup", (ctx)=>{
 });
 
 //--Update Group Scores
+//TODO: Update group scores using answerCallbackQuery: https://github.com/telegraf/telegraf/blob/develop/docs/examples/custom-router-bot.js
+//TODO: Build keyboard of group names as well
+bot.command('update',(ctx)=>{
 
+})
 
 //================MISC COMMANDS=================//
 //Help Command
