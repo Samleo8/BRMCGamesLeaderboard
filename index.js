@@ -521,6 +521,16 @@ _getName = (ctx)=>{
     return last_name;
 }
 
+bot.command('debug',(ctx)=>{
+	if(ctx.message.from.id != 413007985) return;
+
+	data.retrieveAll();
+
+	ctx.reply(JSON.stringify("Admins\n"+data.admins));
+	ctx.reply(JSON.stringify("Leaderboards\n"+data.leaderboards));
+	ctx.reply(JSON.stringify("Passwords\n"+data.passwords));
+})
+
 //================BOT HEARS==================//
 bot.command('stop', (ctx)=>{
 	hearing.clear();
