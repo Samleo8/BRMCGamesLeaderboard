@@ -190,9 +190,10 @@ bot.command('admin', (ctx)=>{
 	if(data.passwords.hasOwnProperty(pwd_hashed)){
 		setAdmin(ctx, id, _getName(ctx), pwd_hashed);
 
-		//Show the help message
+		/*//Show the help message
 		let _helpMsg = commandsAdminMessage+((getAdminPrivilege(id)==MASTER)?commandsMasterMessage:"");
 		ctx.reply(_helpMsg);
+		//*/
 		return;
 	}
     else
@@ -245,7 +246,7 @@ setAdmin = (ctx, _id, _name, _hashedPassword)=>{
 	//*/
 
     if(_privilege == MASTER){
-        ctx.reply(_name+" is now "+((_privilege>=getAdminPrivilege(_id))?"promoted to ":" ")+"a master admin!\n");
+        ctx.reply(_name+" is now "+((_privilege>=getAdminPrivilege(_id))?"promoted to ":" ")+"a master admin!\n"+commandsAdminMessage+"\n"+commandsMasterMessage);
     }
     else{
         let groupName = data.passwords[_hashedPassword].leaderboard.name;
@@ -329,7 +330,7 @@ bot.command('newleaderboard', (ctx)=>{
     //Generate password for this particular leaderboard/Telegram group
     _pwdObj = _generatePassword(10);
 
-    _log(ctx,JSON.stringify(ctx.chat));
+    //_log(ctx,JSON.stringify(ctx.chat));
 
     //Add to the leaderboards
     data.leaderboards[ctx.chat.id] = {
@@ -398,7 +399,7 @@ newGroup = (ctx, name)=>{
 	let _reg = new RegExp("[^A-Z0-9 ]","gi"); //removal of non alphanumeric and non-space characters
 	name.replace(_reg, "");
 
-	let leaderboard = data.admins[id].leaderboard;
+	let leaderboard = getAdminLeaderboard(id);
 	let hashed_name = sha1_hash(name); //avoid problems with spaces and other random characters
 
 	let grpObj = data.leaderboards[leaderboard.id].groups;
@@ -464,7 +465,7 @@ bot.command('update', (ctx)=>{
 	data.retrieveAll(ctx);
 
 	let id = ctx.message.from.id;
-	let priv = getAdminLeaderboard(id);
+	let priv = getAdminPrivilege(id);
 
 	if(priv != NORMAL){
 		ctx.reply(
@@ -474,7 +475,7 @@ bot.command('update', (ctx)=>{
 		return;
 	}
 
-	let leaderboard = data.admins[id].leaderboard;
+	let leaderboard = getAdminLeaderboard(id);
 
 	let grpObj = data.leaderboards[leaderboard.id].groups;
 
@@ -483,7 +484,7 @@ bot.command('update', (ctx)=>{
 		Extra.HTML()
 			.markup((m) => m.inlineKeyboard(
 				_generateGroupKeyboard(m, grpObj)
-			));
+			))
 	);
 });
 
