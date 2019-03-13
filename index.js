@@ -185,7 +185,7 @@ bot.command('admin', (ctx)=>{
 
     //Hash password and compare to see if valid
 	let pwd_hashed = sha1_hash(pwd);
-    _log(ctx,pwd+" "+pwd_hashed);
+    //_log(ctx,pwd+" "+pwd_hashed);
 
 	if(data.passwords.hasOwnProperty(pwd_hashed)){
 		setAdmin(ctx, id, _getName(ctx), pwd_hashed);
@@ -250,7 +250,10 @@ setAdmin = (ctx, _id, _name, _hashedPassword)=>{
     }
     else{
         let groupName = data.passwords[_hashedPassword].leaderboard.name;
-        ctx.reply(_name+" is now an admin for group "+groupName+"!\n\n"+commandsAdminMessage);
+        ctx.reply(
+			_name+" is now an admin for group <b>"+groupName+"</b>!\n\n"+commandsAdminMessage,
+			Extra.HTML()
+		);
     }
 
 	data.admins[_id] = {
@@ -351,7 +354,7 @@ bot.command('newleaderboard', (ctx)=>{
     ctx.telegram.sendMessage(
         ctx.message.from.id,
         FANCY_TITLE+
-        "The password for the group "+ctx.chat.username+" is:\n"+
+        "The password for the leaderboard in "+ctx.chat.title+" is:\n"+
         _pwdObj.raw+"\n\n"+
         "Remember to tell your admins to send /admin "+_pwdObj.raw+" in the private @brmcgamesleaderboardbot chat to activate their admin privileges for this group."
     );
@@ -419,8 +422,8 @@ newGroup = (ctx, name)=>{
 	}
 
 	ctx.reply(
-		"[INFO] Group "+name+" has been added to the leaderboard linked to Telegram Group \""+leaderboard.name+"\"",
-		Extra.inReplyTo(ctx.message.message_id)
+		"[INFO] Group <b>"+name+"</b> has been added to the leaderboard linked to Telegram Group <b>"+leaderboard.name+"</b>",
+		Extra.HTML().inReplyTo(ctx.message.message_id)
 	);
 
 	data.saveAll();
@@ -443,7 +446,7 @@ bot.command('newgroup', (ctx)=>{
 	}
 
 	grpName = ctx.state.command.args;
-	_log(grpName);
+	_log(ctx,grpName);
 
 	if(grpName == null || grpName == undefined || grpName.length<=0){
 		ctx.reply(
@@ -516,6 +519,14 @@ bot.on('callback_query', (ctx)=>{
 
 	console.log(ctx.callbackQuery);
 	console.log(ctx.callbackQuery.data.toString());
+
+	if(ctx.callbackQuery.data.toLowerCase() == "cancel"){
+
+		return;
+	}
+
+	info = ctx.callbackQuery.data.split(":");
+
 });
 
 //================MISC COMMANDS=================//
@@ -550,11 +561,11 @@ _helpMessageDisplay = (ctx)=>{
 			msg+="Master";
 			break;
 		case NORMAL:
-			msg+="Admin (Telegram Group \""+getAdminLeaderboard(ctx.message.from.id).name+"\")";
+			msg+="Admin (<b>\""+getAdminLeaderboard(ctx.message.from.id).name+"\"</b>)";
 			break;
 	}
 
-    return ctx.reply(msg);
+    return ctx.reply(msg, Extra.HTML());
 }
 
 //Display debug messages
