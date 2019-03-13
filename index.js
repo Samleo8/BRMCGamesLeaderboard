@@ -429,7 +429,7 @@ newGroup = (ctx, name)=>{
 bot.command('newgroup', (ctx)=>{
 	hearing.clear();
 
-	data.retrieve("admin");
+	data.retrieve("admin",ctx);
 
 	let id = ctx.message.from.id;
 	let priv = getAdminPrivilege(id);
@@ -443,6 +443,7 @@ bot.command('newgroup', (ctx)=>{
 	}
 
 	grpName = ctx.state.command.args;
+	_log(grpName);
 
 	if(grpName == null || grpName == undefined || grpName.length<=0){
 		ctx.reply(
