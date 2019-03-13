@@ -423,7 +423,7 @@ newGroup = (ctx, name)=>{
 
 	ctx.reply(
 		"[INFO] Group "+name+" has been added to the leaderboard linked to Telegram Group "+leaderboard.name+"",
-		Extra.HTML().inReplyTo(ctx.message.message_id)
+		Extra.inReplyTo(ctx.message.message_id)
 	);
 
 	data.saveAll();
@@ -446,14 +446,15 @@ bot.command('newgroup', (ctx)=>{
 	}
 
 	grpName = ctx.state.command.args;
-	_log(ctx,grpName);
+	ctx.reply(grpName);
 
-	if(grpName == null || grpName == undefined || grpName.length<=0){
+	if(grpName == null || grpName == undefined || grpName.length<=0 || !grpName){
 		ctx.reply(
 			FANCY_TITLE+"[INFO] Please enter the group name(s). Use /stop to tell the bot you are not adding any more groups\n\nAlternatively, use the command /newgroup <groupname>",
 			Extra.inReplyTo(ctx.message.message_id)
 		);
 		hearing.what = "group_name";
+		hearing.anything = true;
 		return;
 	}
 
@@ -485,8 +486,7 @@ bot.command('update', (ctx)=>{
 
 	ctx.reply(
 		FANCY_TITLE+"Which group would you like to update?",
-		Extra.HTML()
-			.markup((m) => m.inlineKeyboard(
+		Extra.markup((m) => m.inlineKeyboard(
 				_generateGroupKeyboard(m, grpObj)
 			))
 	);
