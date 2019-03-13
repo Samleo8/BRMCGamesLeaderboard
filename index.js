@@ -136,6 +136,13 @@ let data = {
 hearing = {
 	"what": "",
 	"anything": false,
+	"start": function(_what){
+		this.anything = true;
+		this.what = _what;
+	},
+	"stop": function(){
+		this.clear();
+	},
 	"clear": function(){
 		this.what = "";
 		this.anything = false;
@@ -453,8 +460,7 @@ bot.command('newgroup', (ctx)=>{
 			FANCY_TITLE+"[INFO] Please enter the group name(s). Use /stop to tell the bot you are not adding any more groups\n\nAlternatively, use the command /newgroup <groupname>",
 			Extra.inReplyTo(ctx.message.message_id)
 		);
-		hearing.what = "group_name";
-		hearing.anything = true;
+		hearing.start("group_name");
 		return;
 	}
 
