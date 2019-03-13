@@ -249,10 +249,10 @@ setAdmin = (ctx, _id, _name, _hashedPassword)=>{
         ctx.reply(_name+" is now "+((_privilege>=getAdminPrivilege(_id))?"promoted to ":" ")+"a master admin!\n"+commandsAdminMessage+"\n"+commandsMasterMessage);
     }
     else{
-        let groupName = data.passwords[_hashedPassword].leaderboard.name;
+        let groupName = data.passwords[_hashedPassword].leaderboard.name.toString();
         ctx.reply(
-			_name+" is now an admin for group <b>"+groupName+"</b>!\n\n"+commandsAdminMessage,
-			Extra.HTML()
+			_name+" is now an admin for Telegram group "+groupName+" !\n\n"+commandsAdminMessage
+			//, Extra.HTML()
 		);
     }
 
@@ -422,7 +422,7 @@ newGroup = (ctx, name)=>{
 	}
 
 	ctx.reply(
-		"[INFO] Group <b>"+name+"</b> has been added to the leaderboard linked to Telegram Group <b>"+leaderboard.name+"</b>",
+		"[INFO] Group "+name+" has been added to the leaderboard linked to Telegram Group "+leaderboard.name+"",
 		Extra.HTML().inReplyTo(ctx.message.message_id)
 	);
 
@@ -552,20 +552,20 @@ _helpMessageDisplay = (ctx)=>{
         msg+=commandsMasterMessage+"\n";
     }
 
-	msg+="\n[ADMIN STATUS]: ";
+	msg+=_getName(ctx)+" is ";
 	switch(priv){
 		case -1:
-			msg+="None";
+			msg+="NOT an admin";
 			break;
 		case MASTER:
-			msg+="Master";
+			msg+="a MASTER admin";
 			break;
 		case NORMAL:
-			msg+="Admin (<b>\""+getAdminLeaderboard(ctx.message.from.id).name+"\"</b>)";
+			msg+="an ADMIN for "+getAdminLeaderboard(ctx.message.from.id).name+"";
 			break;
 	}
 
-    return ctx.reply(msg, Extra.HTML());
+    return ctx.reply(msg);
 }
 
 //Display debug messages
@@ -592,9 +592,9 @@ bot.command('debug',(ctx)=>{
 
 	data.retrieveAll();
 
-	ctx.reply(JSON.stringify("Admins\n"+data.admins));
-	ctx.reply(JSON.stringify("Leaderboards\n"+data.leaderboards));
-	ctx.reply(JSON.stringify("Passwords\n"+data.passwords));
+	ctx.reply("Admins\n"+JSON.stringify(data.admins));
+	ctx.reply("Leaderboards\n"+JSON.stringify(data.leaderboards));
+	ctx.reply("Passwords\n"+JSON.stringify(data.passwords));
 })
 
 //================BOT HEARS==================//
