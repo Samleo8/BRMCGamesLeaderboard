@@ -401,19 +401,18 @@ newGroup = (ctx, name)=>{
 	let leaderboard = data.admins[id].leaderboard;
 	let hashed_name = sha1_hash(name); //avoid problems with spaces and other random characters
 
-	let grpArr = data.leaderboards[leaderboard.id].groups;
+	let grpObj = data.leaderboards[leaderboard.id].groups;
 
-	if(grpArr.hasOwnProperty(hashed_name)){
+	if(grpObj.hasOwnProperty(hashed_name)){
 		ctx.reply(
 			"[ERROR] Group with this name has already been added. To delete the group or update scores, use /deletegroup or /update",
 			Extra.inReplyTo(ctx.message.message_id)
 		);
 	}
 	else{
-		grpArr[hashed_name] = {
+		grpObj[hashed_name] = {
 			"leaderboard":leaderboard.id,
 			"name":name,
-			"hashed_name":hashed_name,
 			"score":0
 		};
 	}
@@ -446,7 +445,7 @@ bot.command('newgroup', (ctx)=>{
 
 	if(grpName == null || grpName == undefined || grpName.length<=0){
 		ctx.reply(
-			"[INFO] Please enter the group name(s). Use /stop to tell the bot you are not adding any more groups\n\nAlternatively, use the command /newgroup <groupname>",
+			FANCY_TITLE+"[INFO] Please enter the group name(s). Use /stop to tell the bot you are not adding any more groups\n\nAlternatively, use the command /newgroup <groupname>",
 			Extra.inReplyTo(ctx.message.message_id)
 		);
 		hearing.what = "group_name";
@@ -459,9 +458,63 @@ bot.command('newgroup', (ctx)=>{
 //--Update Group Scores
 //TODO: Update group scores using answerCallbackQuery: https://github.com/telegraf/telegraf/blob/develop/docs/examples/custom-router-bot.js
 //TODO: Build keyboard of group names as well
-bot.command('update',(ctx)=>{
+bot.command('update', (ctx)=>{
+	hearing.clear();
 
-})
+	data.retrieveAll(ctx);
+
+	let id = ctx.message.from.id;
+	let priv = getAdminLeaderboard(id);
+
+	if(priv != NORMAL){
+		ctx.reply(
+			"[ERROR] Only specific admins of a leaderboard can add groups! Activate your admin privileges using /admin <password>",
+			Extra.inReplyTo(ctx.message.message_id)
+		);
+		return;
+	}
+
+	let leaderboard = data.admins[id].leaderboard;
+
+	let grpObj = data.leaderboards[leaderboard.id].groups;
+
+	ctx.reply(
+		FANCY_TITLE+"Which group would you like to update?",
+		Extra.HTML()
+			.markup((m) => m.inlineKeyboard(
+				_generateGroupKeyboard(m, grpObj)
+			));
+	);
+});
+
+_generateGroupKeyboard = (m, grpObj)=>{
+	//Loop through group object, and generate the inline keyboard
+	//m is the Markup object
+	let keyboard = [];
+
+	for(var i in grpObj){
+		_obj = grpObj[i];
+
+		keyboard.push(
+			m.callbackButton(
+				_obj.name,
+				"name:"+i.toString()
+			)
+		);
+	}
+	keyboard.push(
+		m.callbackButton("Cancel","cancel")
+	);
+
+	return keyboard;
+}
+
+bot.on('callback_query', (ctx)=>{
+	hearing.clear();
+
+	console.log(ctx.callbackQuery);
+	console.log(ctx.callbackQuery.data.toString());
+});
 
 //================MISC COMMANDS=================//
 //Help Command
