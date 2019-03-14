@@ -453,7 +453,6 @@ bot.command('newgroup', (ctx)=>{
 	}
 
 	grpName = ctx.state.command.args;
-	ctx.reply(grpName);
 
 	if(grpName == null || grpName == undefined || grpName.length<=0 || !grpName){
 		ctx.reply(
@@ -614,7 +613,7 @@ bot.on('message', (ctx)=>{
 
 	let msg = ctx.message.text.toString();
 
-	if(msg != null && msg.length>0){
+	if(msg == null || msg.length<=0){
 		return;
 	}
 
