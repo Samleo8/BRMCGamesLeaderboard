@@ -440,7 +440,7 @@ newGroup = (ctx, name)=>{
 bot.command('newgroup', (ctx)=>{
 	hearing.clear();
 
-	data.retrieve("admin",ctx);
+	data.retrieve("admins",ctx);
 
 	let id = ctx.message.from.id;
 	let priv = getAdminPrivilege(id);
@@ -460,7 +460,7 @@ bot.command('newgroup', (ctx)=>{
 			FANCY_TITLE+"[INFO] Please enter the group name(s). Use /stop to tell the bot you are not adding any more groups\n\nAlternatively, use the command /newgroup <groupname>",
 			Extra.inReplyTo(ctx.message.message_id)
 		);
-		hearing.start(grpName);
+		hearing.start("group_name");
 		return;
 	}
 
@@ -509,7 +509,7 @@ _generateGroupKeyboard = (m, grpObj)=>{
 		keyboard.push(
 			m.callbackButton(
 				_obj.name,
-				"name:"+i.toString()
+				"name:"+grpObj[i].leaderboard+":"+i.toString()
 			)
 		);
 	}
@@ -523,11 +523,11 @@ _generateGroupKeyboard = (m, grpObj)=>{
 bot.on('callback_query', (ctx)=>{
 	hearing.clear();
 
-	//console.log(ctx.callbackQuery);
-	//console.log(ctx.callbackQuery.data.toString());
+	console.log("hi "+ctx.callbackQuery.data.toString());
 
 	if(ctx.callbackQuery.data.toLowerCase() == "cancel"){
 		ctx.answerCallbackQuery("Cancel!");
+		ctx.reply("Cancel?");
 		return;
 	}
 
@@ -563,7 +563,7 @@ bot.hears("❓ Help ❓", (ctx)=>{
 
 //Help Message
 _helpMessageDisplay = (ctx)=>{
-	data.retrieve("admin", ctx);
+	data.retrieveAll(ctx);
 
 	let priv = getAdminPrivilege(ctx.message.from.id);
 
@@ -584,7 +584,7 @@ _helpMessageDisplay = (ctx)=>{
 			msg+="a MASTER admin";
 			break;
 		case NORMAL:
-			msg+="an ADMIN for "+getAdminLeaderboard(ctx.message.from.id).name+"";
+			msg+="an ADMIN for "+getAdminLeaderboard(ctx.message.from.id).name;
 			break;
 	}
 
@@ -615,16 +615,12 @@ bot.command('debug',(ctx)=>{
 
 	data.retrieveAll();
 
-	ctx.reply("Admins\n"+JSON.stringify(data.admins));
-	ctx.reply("Leaderboards\n"+JSON.stringify(data.leaderboards));
-	ctx.reply("Passwords\n"+JSON.stringify(data.passwords));
+	ctx.reply("Admins\n"+JSON.stringify(data.admins, null, 4));
+	ctx.reply("Leaderboards\n"+JSON.stringify(data.leaderboards, null, 4));
+	ctx.reply("Passwords\n"+JSON.stringify(data.passwords, null, 4));
 })
 
 //================BOT HEARS==================//
-bot.command('stop', (ctx)=>{
-	hearing.clear();
-})
-
 //Needs to be here because otherwise all the other commands won't run
 bot.on('message', (ctx)=>{
 	if(!hearing.anything) return;
@@ -636,7 +632,7 @@ bot.on('message', (ctx)=>{
 		return;
 	}
 
-	ctx.reply("Heard "+hearing.what);
+	ctx.reply("Heard: "+msg);
 
 	switch(hearing.what){
 		case "": case null: case undefined: return;
