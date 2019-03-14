@@ -344,6 +344,7 @@ bot.command('newleaderboard', (ctx)=>{
 
     //Add to the leaderboards
     data.leaderboards[ctx.chat.id] = {
+		"name": ctx.chat.title,
         "password": _pwdObj.hashed,
         "groups":{} //obj of group objects => name:{ leaderboard, name, hashed_name, score }
     }
@@ -459,7 +460,7 @@ bot.command('newgroup', (ctx)=>{
 			FANCY_TITLE+"[INFO] Please enter the group name(s). Use /stop to tell the bot you are not adding any more groups\n\nAlternatively, use the command /newgroup <groupname>",
 			Extra.inReplyTo(ctx.message.message_id)
 		);
-		hearing.start("group_name");
+		hearing.start(grpName);
 		return;
 	}
 
@@ -522,16 +523,33 @@ _generateGroupKeyboard = (m, grpObj)=>{
 bot.on('callback_query', (ctx)=>{
 	hearing.clear();
 
-	console.log(ctx.callbackQuery);
-	console.log(ctx.callbackQuery.data.toString());
+	//console.log(ctx.callbackQuery);
+	//console.log(ctx.callbackQuery.data.toString());
 
 	if(ctx.callbackQuery.data.toLowerCase() == "cancel"){
-
+		ctx.answerCallbackQuery("Cancel!");
 		return;
 	}
 
-	info = ctx.callbackQuery.data.split(":");
+	data.retrieveAll(ctx);
 
+	let info = ctx.callbackQuery.data.split(":");
+	let hashed_group_name, hashed_leaderboard_name;
+
+	if(info[0]=="name"){
+		hashed_leaderboard_name = info[1];
+		hashed_group_name = info[2];
+
+		let grpData = data.leaderboards[hashed_leaderboard_name].groups[hashed_group_name];
+
+		ctx.answerCallbackQuery(grpData.name);
+		ctx.reply(info[1]+" "+info[2]);
+
+		ctx.reply(
+			FANCY_TITLE+"[INFO] Please choose what to do with group "+grpData.name+"\'s score"
+			//,some markup
+		);
+	}
 });
 
 //================MISC COMMANDS=================//
@@ -614,8 +632,11 @@ bot.on('message', (ctx)=>{
 	let msg = ctx.message.text.toString();
 
 	if(msg == null || msg.length<=0){
+		hearing.stop();
 		return;
 	}
+
+	ctx.reply("Heard "+hearing.what);
 
 	switch(hearing.what){
 		case "": case null: case undefined: return;
