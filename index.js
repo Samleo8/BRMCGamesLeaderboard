@@ -513,9 +513,26 @@ _generateGroupKeyboard = (m, grpObj)=>{
 			)
 		);
 	}
-	keyboard.push(
-		m.callbackButton("Cancel","cancel")
-	);
+	//keyboard.push(m.callbackButton("Cancel","cancel"));
+
+	return keyboard;
+}
+
+_generateScoreKeyboard = (m, grpData)=>{
+	//Loop through group object, and generate the inline keyboard
+	//m is the Markup object
+	let keyboard = [];
+	let dscores = [-10, -5, -1, 1, 5, 10];
+
+	for(var i=0;i<dscores.length;i++){
+		keyboard.push(
+			m.callbackButton(
+				grpData.name,
+				"name:"+grpData.leaderboard+":"+i.toString()+":"+dscores[i].toString()
+			)
+		);
+	}
+	//keyboard.push(m.callbackButton("Cancel","cancel"));
 
 	return keyboard;
 }
@@ -527,7 +544,6 @@ bot.on('callback_query', (ctx)=>{
 
 	if(ctx.callbackQuery.data.toLowerCase() == "cancel"){
 		ctx.answerCallbackQuery("Cancel!");
-		ctx.reply("Cancel?");
 		return;
 	}
 
@@ -536,19 +552,23 @@ bot.on('callback_query', (ctx)=>{
 	let info = ctx.callbackQuery.data.split(":");
 	let hashed_group_name, hashed_leaderboard_name;
 
+	hashed_leaderboard_name = info[1];
+	hashed_group_name = info[2];
+
+	let grpData = data.leaderboards[hashed_leaderboard_name].groups[hashed_group_name];
+
 	if(info[0]=="name"){
-		hashed_leaderboard_name = info[1];
-		hashed_group_name = info[2];
-
-		let grpData = data.leaderboards[hashed_leaderboard_name].groups[hashed_group_name];
-
-		ctx.answerCallbackQuery(grpData.name);
-		ctx.reply(info[1]+" "+info[2]);
-
 		ctx.reply(
 			FANCY_TITLE+"[INFO] Please choose what to do with group "+grpData.name+"\'s score"
-			//,some markup
+			, Extra
+				.inReplyTo(ctx.message.message_id) //also generate keyboard here
+				.markup(
+					(m)=>_generateScoreKeyboard(m,grpData)
+				)
 		);
+	}
+	else if(info[0]=="score"){
+		let deltaScore = info[3];
 	}
 });
 
