@@ -587,14 +587,19 @@ bot.on('callback_query', (ctx)=>{
 			, Extra
 				.inReplyTo(ctx.callbackQuery.message.message_id) //also generate keyboard here
 				.markup((m) => m.inlineKeyboard(
-					_generateScoreKeyboard(m, grpObj)
+					_generateScoreKeyboard(m, grpData)
 				))
 		);
 	}
 	else if(info[0]=="score"){
-		let deltaScore = info[3];
+		let deltaScore = parseInt(info[3]);
+		addScore(leaderboardID, grpID, deltaScore);
 	}
 });
+
+addScore = (leaderboardID, grpID, score)=>{
+
+}
 
 //================MISC COMMANDS=================//
 //Help Command
