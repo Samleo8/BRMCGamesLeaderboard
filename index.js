@@ -528,7 +528,7 @@ _generateScoreKeyboard = (m, grpData)=>{
 		keyboard.push(
 			m.callbackButton(
 				grpData.name,
-				"name:"+grpData.leaderboard+":"+i.toString()+":"+dscores[i].toString()
+				"score:"+grpData.leaderboard+":"+i.toString()+":"+dscores[i].toString()
 			)
 		);
 	}
@@ -559,13 +559,13 @@ bot.on('callback_query', (ctx)=>{
 
 	if(info[0]=="name"){
 		ctx.reply(
-			FANCY_TITLE+"[INFO] Please choose what to do with group "+grpData.name+"\'s score"
+			FANCY_TITLE+"[INFO] Modify group "+grpData.name+"\'s score"
 			, Extra
-				.inReplyTo(ctx.message.message_id) //also generate keyboard here
+				.inReplyTo(ctx.callbackQuery.message.message_id) //also generate keyboard here
 				.markup(
 					(m)=>_generateScoreKeyboard(m,grpData)
 				)
-		);
+		);``
 	}
 	else if(info[0]=="score"){
 		let deltaScore = info[3];
@@ -652,7 +652,7 @@ bot.on('message', (ctx)=>{
 		return;
 	}
 
-	ctx.reply("Heard: "+msg);
+	//ctx.reply("Heard: "+msg);
 
 	switch(hearing.what){
 		case "": case null: case undefined: return;
