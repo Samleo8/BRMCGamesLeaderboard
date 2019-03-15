@@ -550,8 +550,8 @@ _generateScoreKeyboard = (m, grpData, buttonsPerRow=3)=>{
 			if(ind>=dscores.length) break;
 			tempArr.push(
 				m.callbackButton(
-					grpData.name,
-					"score:"+grpData.leaderboard+":"+sha1_hash(grpData.name)+":"+dscores[ind].toString()
+					dscores[ind],
+					"score:"+grpData.leaderboard+":"+sha1_hash(grpData.name)+":"+dscores[ind]
 				)
 			);
 		}
@@ -593,14 +593,35 @@ bot.on('callback_query', (ctx)=>{
 	}
 	else if(info[0]=="score"){
 		let deltaScore = parseInt(info[3]);
-		addScore(leaderboardID, grpID, deltaScore);
+		addScore(hashed_leaderboard_name, hashed_group_name, deltaScore, ctx);
 	}
 });
 
-addScore = (leaderboardID, grpID, score)=>{
+addScore = (leaderboardID, grpID, score, ctx)=>{
+	data.retrieve("leaderboards",ctx);
 
+	let _msgId = ctx.callbackQuery.message.message_id || ctx.message.message_id;
+
+	let grp = data.leaderboards[leaderboardID].groups[grpID];
+	grp.score += score;
+
+	ctx.reply(
+		FANCY_TITLE+
+		"[INFO] "+score+" point(s) has been added to group "+grp.name+".\n"+
+		"Group "+grp.name+" now has "+grp.score+" point(s) in total!",
+		Extra.inReplyTo(_msgId)
+	);
+
+	data.save("leaderboards",ctx);
 }
 
+setScore = (leaderboardID, grpID, score)=>{
+	data.retrieve("leaderboards",ctx);
+
+	data.leaderboards[leaderboardID].groups[grpID].score = score;
+
+	data.save("leaderboards",ctx);
+}
 //================MISC COMMANDS=================//
 //Help Command
 bot.command('help', (ctx) => {
