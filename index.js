@@ -490,49 +490,73 @@ bot.command('update', (ctx)=>{
 
 	let grpObj = data.leaderboards[leaderboard.id].groups;
 
-	ctx.reply(
-		FANCY_TITLE+"Which group would you like to update?",
-		Extra.markup((m) => m.inlineKeyboard(
-				_generateGroupKeyboard(m, grpObj)
-			))
-	);
+	if(Object.keys(grpObj).length === 0){ //No groups added yet
+		ctx.reply(
+			"[INFO] No groups added yet! Use /newgroup to add a new group!",
+			Extra.inReplyTo(ctx.message.message_id)
+		);
+	}
+	else{
+		ctx.reply(
+			FANCY_TITLE+"Which group would you like to update?",
+			Extra.markup((m) => m.inlineKeyboard(
+					_generateGroupKeyboard(m, grpObj)
+				))
+		);
+	}
 });
 
-_generateGroupKeyboard = (m, grpObj)=>{
+_generateGroupKeyboard = (m, grpObj, buttonsPerRow=3)=>{
 	//Loop through group object, and generate the inline keyboard
 	//m is the Markup object
-	let keyboard = [];
+	let keyboard = [], tempArr = [];
+	let cnt=0;
 
 	for(var i in grpObj){
 		_obj = grpObj[i];
 
-		keyboard.push(
+		tempArr.push(
 			m.callbackButton(
 				_obj.name,
 				"name:"+grpObj[i].leaderboard+":"+i.toString()
 			)
 		);
+
+		if(cnt<buttonsPerRow) cnt++;
+
+		if(cnt==buttonsPerRow){
+			keyboard.push(tempArr);
+			tempArr = []; cnt = 0;
+		}
+	}
+	if(cnt!=0){
+		keyboard.push(tempArr);
 	}
 	//keyboard.push(m.callbackButton("Cancel","cancel"));
 
 	return keyboard;
 }
 
-_generateScoreKeyboard = (m, grpData)=>{
+_generateScoreKeyboard = (m, grpData, buttonsPerRow=3)=>{
 	//Loop through group object, and generate the inline keyboard
 	//m is the Markup object
-	let keyboard = [];
-	let dscores = [-10, -5, -1, 1, 5, 10];
+	let keyboard = [], tempArr = [];
+	let dscores = ["-10", "-5", "-1", "+1", "+5", "+10"];
 
-	for(var i=0;i<dscores.length;i++){
-		keyboard.push(
-			m.callbackButton(
-				grpData.name,
-				"score:"+grpData.leaderboard+":"+i.toString()+":"+dscores[i].toString()
-			)
-		);
+	for(var i=0;i<Math.ceil(dscores.length/buttonsPerRow);i++){
+		tempArr = [];
+		for(var j=0;j<buttonsPerRow;j++){
+			var ind = i*buttonsPerRow+j;
+			if(ind>=dscores.length) break;
+			tempArr.push(
+				m.callbackButton(
+					grpData.name,
+					"score:"+grpData.leaderboard+":"+sha1_hash(grpData.name)+":"+dscores[ind].toString()
+				)
+			);
+		}
+		keyboard.push(tempArr);
 	}
-	//keyboard.push(m.callbackButton("Cancel","cancel"));
 
 	return keyboard;
 }
@@ -562,10 +586,10 @@ bot.on('callback_query', (ctx)=>{
 			FANCY_TITLE+"[INFO] Modify group "+grpData.name+"\'s score"
 			, Extra
 				.inReplyTo(ctx.callbackQuery.message.message_id) //also generate keyboard here
-				.markup(
-					(m)=>_generateScoreKeyboard(m,grpData)
-				)
-		);``
+				.markup((m) => m.inlineKeyboard(
+					_generateScoreKeyboard(m, grpObj)
+				))
+		);
 	}
 	else if(info[0]=="score"){
 		let deltaScore = info[3];
