@@ -574,19 +574,20 @@ bot.on('callback_query', (ctx)=>{
 	data.retrieveAll(ctx);
 
 	let info = ctx.callbackQuery.data.split(":");
-	let hashed_group_name, hashed_leaderboard_name;
+	let hashed_group_name, leaderboardID;
 
-	hashed_leaderboard_name = info[1];
+	leaderboardID = info[1];
 	hashed_group_name = info[2];
 
-	let grpData = data.leaderboards[hashed_leaderboard_name].groups[hashed_group_name];
+	let grpData = data.leaderboards[leaderboardID].groups[hashed_group_name];
 
 	let _id = ctx.callbackQuery.from.id;
 	let leaderboard = getAdminLeaderboard(_id);
 
 	if(info[0]=="name"){
-		if(getAdminPrivilege(_id)!=MASTER && sha1_hash(leaderboard.name)!=hashed_leaderboard_name){
-			return ctx.answerCallbackQuery("[ERROR] Only admins can update score!");
+		if(getAdminPrivilege(_id)!=MASTER && typeof leaderboard.id!="undefined" && leaderboard.id!=leaderboardID){
+			//ctx.reply("[ERROR] Only admins can update score!");
+			return ctx.answerCbQuery("[ERROR] Only admins can update score!");
 		}
 
 		ctx.reply(
@@ -601,12 +602,15 @@ bot.on('callback_query', (ctx)=>{
 		ctx.answerCallbackQuery(grpData.name+" selected!");
 	}
 	else if(info[0]=="score"){
-		if(getAdminPrivilege(_id)!=MASTER && sha1_hash(leaderboard.name)!=hashed_leaderboard_name){
-			return ctx.answerCallbackQuery("[ERROR] Only admins can update score!");
+		_log("Update score for ");
+
+		if(getAdminPrivilege(_id)!=MASTER && typeof leaderboard.id!="undefined" && leaderboard.id!=leaderboardID){
+			//ctx.reply("[ERROR] Only admins can update score!");
+			return ctx.answerCbQuery("[ERROR] Only admins can update score!");
 		}
-		
+
 		let deltaScore = parseInt(info[3]);
-		addScore(hashed_leaderboard_name, hashed_group_name, deltaScore, ctx);
+		addScore(leaderboardID, hashed_group_name, deltaScore, ctx);
 	}
 
 	return;
@@ -635,7 +639,18 @@ addScore = (leaderboardID, grpID, score, ctx)=>{
 setScore = (leaderboardID, grpID, score)=>{
 	data.retrieve("leaderboards",ctx);
 
-	data.leaderboards[leaderboardID].groups[grpID].score = score;
+	let _msgId = ctx.callbackQuery.message.message_id || ctx.message.message_id;
+
+	let grp = data.leaderboards[leaderboardID].groups[grpID];
+	grp.score = score;
+
+	ctx.reply(
+		FANCY_TITLE+
+		"[INFO] Group "+grp.name+" now has "+grp.score+" point(s) in total!"
+		//, Extra.inReplyTo(_msgId)
+	);
+
+	ctx.answerCallbackQuery(score+" point(s) to group "+grp.name);
 
 	data.save("leaderboards",ctx);
 }
@@ -714,7 +729,7 @@ bot.on('message', (ctx)=>{
 
 	let msg = ctx.message.text.toString();
 
-	if(msg == null || msg.length<=0 || msg[0] == "\/"){ //ensure commands do not accidentally trigger
+	if(msg == null || msg.length<=0 || msg[0] == "\/" || msg[0] == "\@"){ //ensure commands do not accidentally trigger
 		hearing.stop();
 		return;
 	}
