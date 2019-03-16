@@ -74,7 +74,7 @@ const FANCY_TITLE = "🎉 📊 BRMC Games Leaderboard 📊 🎉 \n";
 let i = 0, j = 0;
 
 //================DATA HANDLING=================//
-const MASTER = 0, NORMAL = 1;
+const MASTER = 0, NORMAL = 1, NONE = -1;
 
 //Use data object for scalability
 let data = {
@@ -234,7 +234,7 @@ getAdminPrivilege = (_id)=>{
 getAdminLeaderboard = (_id)=>{
 	let priv = getAdminPrivilege(_id);
 
-    if(priv == -1 || priv == 0) return priv;
+    if(priv == NONE || priv == MASTER) return priv;
 
 	return data.admins[_id].leaderboard;
 }
@@ -379,12 +379,67 @@ bot.command('newleaderboard', (ctx)=>{
 });
 
 //================LEADERBOARD GROUP HANDLING=================//
+generateScoreText = (ctx, leaderboardID)=>{
+	data.retrieveAll();
+
+	let out = FANCY_TITLE;
+	let grps = data.leaderboards[leaderboardID].groups;
+
+	let grpArr = [];
+	let i;
+	for(i in grps){
+		grpArr.push({
+			"name":grps[i].name,
+			"score":grps[i].score
+		});
+	}
+
+	grpArr.sort(function(a,b){
+		return parseInt(b.score)-parseInt(a.score);
+	});
+
+	for(i=0;i<grpArr.length;i++){
+		out+=grpArr[i].name+" - "+grpArr[i].score;
+	}
+
+	return out;
+}
+
 //Send scores to group
-bot.command('show', (ctx)=>{
+displayScores = (ctx)=>{
 	hearing.clear();
 
-	//TODO:
-});
+	data.retrieveAll();
+
+	let id = ctx.message.from.id;
+	let chat_id = ctx.chat.id;
+	let priv = getAdminPrivilege(id);
+
+	//If MASTER admin, make sure that the Telegram group has a valid leaderboard
+ 	if(priv==MASTER && !data.leaderboards.hasOwnProperty(chat_id))){
+		return ctx.reply(
+			"[ERROR] Master admins can only activate this command in a Telegram group with a leaderboard!"
+			, Extra.inReplyTo(ctx.message.message_id)
+		);
+	}
+
+	let leaderboardID = (priv==NORMAL)?getAdminLeaderboard(id).id:chat_id;
+
+	outputText = getScores(ctx, leaderboardID);
+
+	//If non-admin, the scores will only be revealed to them in the private chat
+	if(ctx.chat.type != "private" && priv==NONE){
+		//Send private message to user
+	    return ctx.telegram.sendMessage(
+	        ctx.message.from.id,
+	        outputText
+	    );
+	}
+
+	ctx.reply(outputText);
+}
+
+bot.command('show', displayScores);
 
 //--New groups
 newGroup = (ctx, name)=>{
@@ -400,7 +455,7 @@ newGroup = (ctx, name)=>{
 		ctx.reply("[ERROR] Sorry I can\'t tell which leaderboard you want to add the group to");
 		return;
 	}
-	else if(priv == -1){ //not admin
+	else if(priv == NONE){ //not admin
 		ctx.reply(
 			"[ERROR] Only admins can add groups! Activate your admin privileges using /admin <password>",
 			Extra.inReplyTo(ctx.message.message_id)
@@ -470,8 +525,6 @@ bot.command('newgroup', (ctx)=>{
 });
 
 //--Update Group Scores
-//TODO: Update group scores using answerCallbackQuery: https://github.com/telegraf/telegraf/blob/develop/docs/examples/custom-router-bot.js
-//TODO: Build keyboard of group names as well
 bot.command('update', (ctx)=>{
 	hearing.clear();
 
@@ -681,7 +734,7 @@ _helpMessageDisplay = (ctx)=>{
 
 	msg+=_getName(ctx)+" is ";
 	switch(priv){
-		case -1:
+		case NONE:
 			msg+="NOT an admin";
 			break;
 		case MASTER:
