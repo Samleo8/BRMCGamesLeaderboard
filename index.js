@@ -590,11 +590,15 @@ bot.on('callback_query', (ctx)=>{
 					_generateScoreKeyboard(m, grpData)
 				))
 		);
+
+		ctx.answerCallbackQuery(grpData.name+" selected!");
 	}
 	else if(info[0]=="score"){
 		let deltaScore = parseInt(info[3]);
 		addScore(hashed_leaderboard_name, hashed_group_name, deltaScore, ctx);
 	}
+
+	return;
 });
 
 addScore = (leaderboardID, grpID, score, ctx)=>{
@@ -611,6 +615,8 @@ addScore = (leaderboardID, grpID, score, ctx)=>{
 		"Group "+grp.name+" now has "+grp.score+" point(s) in total!",
 		Extra.inReplyTo(_msgId)
 	);
+
+	ctx.answerCallbackQuery(score+" point(s) to group "+grp.name);
 
 	data.save("leaderboards",ctx);
 }
@@ -697,7 +703,7 @@ bot.on('message', (ctx)=>{
 
 	let msg = ctx.message.text.toString();
 
-	if(msg == null || msg.length<=0){
+	if(msg == null || msg.length<=0 || msg[0] == "\/"){ //ensure commands do not accidentally trigger
 		hearing.stop();
 		return;
 	}
