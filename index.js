@@ -430,8 +430,8 @@ newGroup = (ctx, name)=>{
 	}
 
 	ctx.reply(
-		"[INFO] Group "+name+" has been added to the leaderboard linked to Telegram Group "+leaderboard.name+"",
-		Extra.inReplyTo(ctx.message.message_id)
+		"[INFO] Group "+name+" has been added to the leaderboard linked to Telegram Group "+leaderboard.name+""
+		, Extra.inReplyTo(ctx.message.message_id)
 	);
 
 	data.saveAll();
@@ -457,7 +457,7 @@ bot.command('newgroup', (ctx)=>{
 
 	if(grpName == null || grpName == undefined || grpName.length<=0 || !grpName){
 		ctx.reply(
-			FANCY_TITLE+"[INFO] Please enter the group name(s). Use /stop to tell the bot you are not adding any more groups\n\nAlternatively, use the command /newgroup <groupname>",
+			FANCY_TITLE+"[INFO] Please enter the group name(s).\nAlternatively, use the command /newgroup <groupname>",
 			Extra.inReplyTo(ctx.message.message_id)
 		);
 		hearing.start("group_name");
@@ -480,8 +480,8 @@ bot.command('update', (ctx)=>{
 
 	if(priv != NORMAL){
 		ctx.reply(
-			"[ERROR] Only specific admins of a leaderboard can add groups! Activate your admin privileges using /admin <password>",
-			Extra.inReplyTo(ctx.message.message_id)
+			"[ERROR] Only specific admins of a leaderboard can add groups! Activate your admin privileges using /admin <password>"
+			//, Extra.inReplyTo(ctx.message.message_id)
 		);
 		return;
 	}
@@ -492,16 +492,16 @@ bot.command('update', (ctx)=>{
 
 	if(Object.keys(grpObj).length === 0){ //No groups added yet
 		ctx.reply(
-			"[INFO] No groups added yet! Use /newgroup to add a new group!",
-			Extra.inReplyTo(ctx.message.message_id)
+			"[INFO] No groups added yet! Use /newgroup to add a new group!"
+			, Extra.inReplyTo(ctx.message.message_id)
 		);
 	}
 	else{
 		ctx.reply(
 			FANCY_TITLE+"Which group would you like to update?",
 			Extra.markup((m) => m.inlineKeyboard(
-					_generateGroupKeyboard(m, grpObj)
-				))
+				_generateGroupKeyboard(m, grpObj)
+			))
 		);
 	}
 });
@@ -564,12 +564,12 @@ _generateScoreKeyboard = (m, grpData, buttonsPerRow=3)=>{
 bot.on('callback_query', (ctx)=>{
 	hearing.clear();
 
-	console.log("hi "+ctx.callbackQuery.data.toString());
-
+	/*
 	if(ctx.callbackQuery.data.toLowerCase() == "cancel"){
 		ctx.answerCallbackQuery("Cancel!");
 		return;
 	}
+	*/
 
 	data.retrieveAll(ctx);
 
@@ -581,11 +581,18 @@ bot.on('callback_query', (ctx)=>{
 
 	let grpData = data.leaderboards[hashed_leaderboard_name].groups[hashed_group_name];
 
+	let _id = ctx.callbackQuery.from.id;
+	let leaderboard = getAdminLeaderboard(_id);
+
 	if(info[0]=="name"){
+		if(getAdminPrivilege(_id)!=MASTER && sha1_hash(leaderboard.name)!=hashed_leaderboard_name){
+			return ctx.answerCallbackQuery("[ERROR] Only admins can update score!");
+		}
+
 		ctx.reply(
 			FANCY_TITLE+"[INFO] Modify group "+grpData.name+"\'s score"
 			, Extra
-				.inReplyTo(ctx.callbackQuery.message.message_id) //also generate keyboard here
+				//.inReplyTo(ctx.callbackQuery.message.message_id)
 				.markup((m) => m.inlineKeyboard(
 					_generateScoreKeyboard(m, grpData)
 				))
@@ -594,6 +601,10 @@ bot.on('callback_query', (ctx)=>{
 		ctx.answerCallbackQuery(grpData.name+" selected!");
 	}
 	else if(info[0]=="score"){
+		if(getAdminPrivilege(_id)!=MASTER && sha1_hash(leaderboard.name)!=hashed_leaderboard_name){
+			return ctx.answerCallbackQuery("[ERROR] Only admins can update score!");
+		}
+		
 		let deltaScore = parseInt(info[3]);
 		addScore(hashed_leaderboard_name, hashed_group_name, deltaScore, ctx);
 	}
@@ -612,8 +623,8 @@ addScore = (leaderboardID, grpID, score, ctx)=>{
 	ctx.reply(
 		FANCY_TITLE+
 		"[INFO] "+score+" point(s) has been added to group "+grp.name+".\n"+
-		"Group "+grp.name+" now has "+grp.score+" point(s) in total!",
-		Extra.inReplyTo(_msgId)
+		"Group "+grp.name+" now has "+grp.score+" point(s) in total!"
+		//, Extra.inReplyTo(_msgId)
 	);
 
 	ctx.answerCallbackQuery(score+" point(s) to group "+grp.name);
@@ -669,8 +680,8 @@ _helpMessageDisplay = (ctx)=>{
 
 //Display debug messages
 _log = (ctx, msg)=>{
-    //console.log("[DEBUG] "+msg);
-    if(getAdminPrivilege(ctx.message.from.id)==MASTER) ctx.reply("[DEBUG] "+msg);
+    console.log("[DEBUG] "+msg);
+    //if(getAdminPrivilege(ctx.message.from.id)==MASTER) ctx.reply("[DEBUG] "+msg);
 }
 
 //Get user's name from ctx
