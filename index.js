@@ -399,7 +399,7 @@ generateScoreText = (ctx, leaderboardID)=>{
 	});
 
 	for(i=0;i<grpArr.length;i++){
-		out+=grpArr[i].name+" - "+grpArr[i].score;
+		out+=grpArr[i].name+" - "+grpArr[i].score+"\n";
 	}
 
 	return out;
@@ -416,7 +416,7 @@ displayScores = (ctx)=>{
 	let priv = getAdminPrivilege(id);
 
 	//If MASTER admin, make sure that the Telegram group has a valid leaderboard
- 	if(priv==MASTER && !data.leaderboards.hasOwnProperty(chat_id))){
+ 	if(priv==MASTER && !data.leaderboards.hasOwnProperty(chat_id)){
 		return ctx.reply(
 			"[ERROR] Master admins can only activate this command in a Telegram group with a leaderboard!"
 			, Extra.inReplyTo(ctx.message.message_id)
