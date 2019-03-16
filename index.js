@@ -364,7 +364,7 @@ bot.command('newleaderboard', (ctx)=>{
         FANCY_TITLE+
         "The password for the leaderboard in "+ctx.chat.title+" is:\n"+
         _pwdObj.raw+"\n\n"+
-        "Remember to tell your admins to send /admin "+_pwdObj.raw+" in the private @brmcgamesleaderboardbot chat to activate their admin privileges for this group."
+        "Remember to tell your admins to send /admin "+_pwdObj.raw+" in the PRIVATE @brmcgamesleaderboardbot CHAT to activate their admin privileges for this group."
     );
 
     ctx.telegram.sendMessage(
@@ -379,9 +379,11 @@ bot.command('newleaderboard', (ctx)=>{
 });
 
 //================LEADERBOARD GROUP HANDLING=================//
+//Send scores to group
 bot.command('show', (ctx)=>{
 	hearing.clear();
 
+	//TODO:
 });
 
 //--New groups
