@@ -383,7 +383,7 @@ bot.command('newleaderboard', (ctx)=>{
 generateScoreText = (ctx, leaderboardID)=>{
 	data.retrieveAll();
 
-	let out = "<b>"+FANCY_TITLE+"</b><br><b>[CURRENT SCORES]<b><br>";
+	let out = FANCY_TITLE+"\n[CURRENT SCORES]\n";
 	let grps = data.leaderboards[leaderboardID].groups;
 
 	//ctx.reply("Generating score text..");
@@ -415,10 +415,10 @@ generateScoreText = (ctx, leaderboardID)=>{
 				out+="🥉 ";
 				break;
 			default:
-				out+="<b>"+parseInt(i+1)+". ";
+				out+=parseInt(i+1)+". ";
 		}
 
-		out+=grpArr[i].name+"</b> - "+grpArr[i].score+"pts<br>";
+		out+=grpArr[i].name+" - "+grpArr[i].score+"pts\n";
 	}
 
 	return out;
@@ -459,15 +459,11 @@ displayScores = (ctx)=>{
 		//Send private message to user
 	    return ctx.telegram.sendMessage(
 	        ctx.message.from.id,
-	        outputText,
-			Extra.HTML()
+	        outputText
 	    );
 	}
 
-	ctx.reply(
-		outputText,
-		Extra.HTML()
-	);
+	ctx.reply(outputText);
 }
 
 bot.command('scores', displayScores);
