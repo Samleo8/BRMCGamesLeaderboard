@@ -479,7 +479,8 @@ newGroup = (ctx, name)=>{
 	let priv = getAdminPrivilege(id);
 
 	if(priv == MASTER && ctx.chat.type=="private"){
-		//New groupreturn ctx.reply(
+		//New group can only be activated by master admin in a group chat
+		return ctx.reply(
 			"[ERROR] Master admins can only activate this command in a Telegram group with a leaderboard!"
 			, Extra.inReplyTo(ctx.message.message_id)
 		);
@@ -603,6 +604,10 @@ bot.command('update', (ctx)=>{
 			))
 		);
 	}
+});
+
+bot.command('deletegroup',(ctx)=>{
+	//TODO: Group and leaderboard deleting/editing
 });
 
 _generateGroupKeyboard = (m, grpObj, buttonsPerRow=3)=>{
