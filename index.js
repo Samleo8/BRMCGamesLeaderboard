@@ -478,10 +478,11 @@ newGroup = (ctx, name)=>{
 	let id = ctx.message.from.id;
 	let priv = getAdminPrivilege(id);
 
-	if(priv == MASTER){
-		ctx.reply("[INFO] As a master admin, you have access to all leaderboards.");
-		//TODO: allow to master admin to modify leaderboard
-		ctx.reply("[ERROR] Sorry I can\'t tell which leaderboard you want to add the group to");
+	if(priv == MASTER && ctx.chat.type=="private"){
+		//New groupreturn ctx.reply(
+			"[ERROR] Master admins can only activate this command in a Telegram group with a leaderboard!"
+			, Extra.inReplyTo(ctx.message.message_id)
+		);
 		return;
 	}
 	else if(priv == NONE){ //not admin
@@ -493,13 +494,13 @@ newGroup = (ctx, name)=>{
 	}
 
 	//Make object with index by name
-	let _reg = new RegExp("[^A-Z0-9 ]","gi"); //removal of non alphanumeric and non-space characters
-	name.replace(_reg, "");
+	//let _reg = new RegExp("[^A-Z0-9 ]","gi"); //removal of non alphanumeric and non-space characters
+	//name.replace(_reg, "");
 
-	let leaderboard = getAdminLeaderboard(id);
+	let leaderboardID = (priv==MASTER)?ctx.chat.id:getAdminLeaderboard(id).id;
 	let hashed_name = sha1_hash(name); //avoid problems with spaces and other random characters
 
-	let grpObj = data.leaderboards[leaderboard.id].groups;
+	let grpObj = data.leaderboards[leaderboardID].groups;
 
 	if(grpObj.hasOwnProperty(hashed_name)){
 		ctx.reply(
@@ -509,7 +510,7 @@ newGroup = (ctx, name)=>{
 	}
 	else{
 		grpObj[hashed_name] = {
-			"leaderboard":leaderboard.id,
+			"leaderboard":leaderboardID,
 			"name":name,
 			"score":0
 		};
@@ -527,16 +528,30 @@ bot.command('newgroup', (ctx)=>{
 	hearing.clear();
 
 	data.retrieve("admins",ctx);
+	data.retrieve("leaderboards",ctx);
 
 	let id = ctx.message.from.id;
 	let priv = getAdminPrivilege(id);
 
-	if(priv != NORMAL){
+	//If chat is grp/channel but no leaderboard here
+	if(ctx.chat.type != "private" && !data.leaderboards.hasOwnProperty(ctx.chat.id)){
+		return ctx.reply(
+			"[ERROR] There is no leaderboard associated with this telegram group.\nGet the master admin to create a /newleaderboard"
+		);
+	}
+
+	if(priv==NONE){
 		ctx.reply(
 			"[ERROR] Only specific admins of this leaderboard can add groups! Activate your admin privileges using /admin <password>",
 			Extra.inReplyTo(ctx.message.message_id)
 		);
 		return;
+	}
+	else if(priv==MASTER && ctx.chat.type=="private"){
+		ctx.reply(
+			"[ERROR] Master admins can only send the /newgroup command in Telegram group/channels that has a leaderboard tagged to them.",
+			Extra.inReplyTo(ctx.message.message_id)
+		);
 	}
 
 	grpName = ctx.state.command.args;
