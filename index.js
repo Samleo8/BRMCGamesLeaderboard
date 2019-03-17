@@ -399,7 +399,7 @@ generateScoreText = (ctx, leaderboardID)=>{
 	});
 
 	for(i=0;i<grpArr.length;i++){
-		out+=grpArr[i].name+" - "+grpArr[i].score+"\n";
+		out+=i+". "+grpArr[i].name+" - "+grpArr[i].score+"\n";
 	}
 
 	return out;
@@ -425,7 +425,7 @@ displayScores = (ctx)=>{
 
 	let leaderboardID = (priv==NORMAL)?getAdminLeaderboard(id).id:chat_id;
 
-	outputText = getScores(ctx, leaderboardID);
+	outputText = generateScoreText(ctx, leaderboardID);
 
 	//If non-admin, the scores will only be revealed to them in the private chat
 	if(ctx.chat.type != "private" && priv==NONE){
