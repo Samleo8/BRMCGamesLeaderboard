@@ -484,7 +484,6 @@ newGroup = (ctx, name)=>{
 			"[ERROR] Master admins can only activate this command in a Telegram group with a leaderboard!"
 			, Extra.inReplyTo(ctx.message.message_id)
 		);
-		return;
 	}
 	else if(priv == NONE){ //not admin
 		ctx.reply(
@@ -504,7 +503,7 @@ newGroup = (ctx, name)=>{
 	let grpObj = data.leaderboards[leaderboardID].groups;
 
 	if(grpObj.hasOwnProperty(hashed_name)){
-		ctx.reply(
+		return ctx.reply(
 			"[ERROR] Group with this name has already been added. To delete the group or update scores, use /deletegroup or /update",
 			Extra.inReplyTo(ctx.message.message_id)
 		);
@@ -553,6 +552,7 @@ bot.command('newgroup', (ctx)=>{
 			"[ERROR] Master admins can only send the /newgroup command in Telegram group/channels that has a leaderboard tagged to them.",
 			Extra.inReplyTo(ctx.message.message_id)
 		);
+		return;
 	}
 
 	grpName = ctx.state.command.args;
