@@ -58,7 +58,7 @@ const helpMessage =
 const commandsMessage =
 "/help - Displays this help message.\n"+
 "/admin <password> - Makes the current user (i.e. you) admin of the group whose password has been given to you. DO THIS ONLY IN THE PRIVATE CHAT!\n"+
-"/show - Show current scores.\n";
+"/scores - Show current scores.\n";
 
 const commandsAdminMessage =
 "/update - Update group scores [admin].\n"+
@@ -66,7 +66,8 @@ const commandsAdminMessage =
 
 const commandsMasterMessage =
 "/newleaderboard - Creates a new leaderboard. Command MUST be given in the Telegram group/channel that is is linked to. Generates passcode for that leaderboard to be given to admins [master].\n"+
-"/deleteleaderboard - Delete a leaderboard [master].\n";
+"/deleteleaderboard - Delete a leaderboard [master].\n"
++"/setscore - Override the score of a group [master]";
 
 //Fancy title
 const FANCY_TITLE = "🎉 📊 BRMC Games Leaderboard 📊 🎉 \n";
@@ -385,6 +386,10 @@ generateScoreText = (ctx, leaderboardID)=>{
 	let out = FANCY_TITLE;
 	let grps = data.leaderboards[leaderboardID].groups;
 
+	ctx.reply("Generating score text..");
+	ctx.reply("leaderboardID: "+leaderboardID);
+	ctx.reply(JSON.stringify(grps,null,4));
+
 	let grpArr = [];
 	let i;
 	for(i in grps){
@@ -399,7 +404,21 @@ generateScoreText = (ctx, leaderboardID)=>{
 	});
 
 	for(i=0;i<grpArr.length;i++){
-		out+=i+". "+grpArr[i].name+" - "+grpArr[i].score+"\n";
+		switch(i){
+			case 0:
+				out+="🥇 ";
+				break;
+			case 1:
+				out+="🥈 ";
+				break;
+			case 2:
+				out+="🥉 ";
+				break;
+			default:
+				out+=parseInt(i+1)+". ";
+		}
+
+		out+=grpArr[i].name+" - "+grpArr[i].score+"\n";
 	}
 
 	return out;
@@ -439,6 +458,7 @@ displayScores = (ctx)=>{
 	ctx.reply(outputText);
 }
 
+bot.command('scores', displayScores);
 bot.command('show', displayScores);
 
 //--New groups
