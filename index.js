@@ -383,12 +383,12 @@ bot.command('newleaderboard', (ctx)=>{
 generateScoreText = (ctx, leaderboardID)=>{
 	data.retrieveAll();
 
-	let out = FANCY_TITLE;
+	let out = "<b>"+FANCY_TITLE+"</b><br><b>[CURRENT SCORES]<b><br>";
 	let grps = data.leaderboards[leaderboardID].groups;
 
-	ctx.reply("Generating score text..");
-	ctx.reply("leaderboardID: "+leaderboardID);
-	ctx.reply(JSON.stringify(grps,null,4));
+	//ctx.reply("Generating score text..");
+	//ctx.reply("leaderboardID: "+leaderboardID);
+	//ctx.reply(JSON.stringify(grps,null,4));
 
 	let grpArr = [];
 	let i;
@@ -415,10 +415,10 @@ generateScoreText = (ctx, leaderboardID)=>{
 				out+="🥉 ";
 				break;
 			default:
-				out+=parseInt(i+1)+". ";
+				out+="<b>"+parseInt(i+1)+". ";
 		}
 
-		out+=grpArr[i].name+" - "+grpArr[i].score+"\n";
+		out+=grpArr[i].name+"</b> - "+grpArr[i].score+"pts<br>";
 	}
 
 	return out;
@@ -434,6 +434,16 @@ displayScores = (ctx)=>{
 	let chat_id = ctx.chat.id;
 	let priv = getAdminPrivilege(id);
 
+	let leaderboardID = (priv==NORMAL)?getAdminLeaderboard(id).id:chat_id;
+	let grpObj = data.leaderboards[leaderboardID].groups;
+
+	if(Object.keys(grpObj).length === 0){ //No groups added yet
+		ctx.reply(
+			"[INFO] No groups added yet! Use /newgroup to add a new group!"
+			, Extra.inReplyTo(ctx.message.message_id)
+		);
+	}
+
 	//If MASTER admin, make sure that the Telegram group has a valid leaderboard
  	if(priv==MASTER && !data.leaderboards.hasOwnProperty(chat_id)){
 		return ctx.reply(
@@ -442,20 +452,22 @@ displayScores = (ctx)=>{
 		);
 	}
 
-	let leaderboardID = (priv==NORMAL)?getAdminLeaderboard(id).id:chat_id;
-
-	outputText = generateScoreText(ctx, leaderboardID);
+	let outputText = generateScoreText(ctx, leaderboardID);
 
 	//If non-admin, the scores will only be revealed to them in the private chat
 	if(ctx.chat.type != "private" && priv==NONE){
 		//Send private message to user
 	    return ctx.telegram.sendMessage(
 	        ctx.message.from.id,
-	        outputText
+	        outputText,
+			Extra.HTML()
 	    );
 	}
 
-	ctx.reply(outputText);
+	ctx.reply(
+		outputText,
+		Extra.HTML()
+	);
 }
 
 bot.command('scores', displayScores);
