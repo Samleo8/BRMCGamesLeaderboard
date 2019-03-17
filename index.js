@@ -383,7 +383,7 @@ bot.command('newleaderboard', (ctx)=>{
 generateScoreText = (ctx, leaderboardID)=>{
 	data.retrieveAll();
 
-	let out = FANCY_TITLE+"\n[CURRENT SCORES]\n";
+	let out = FANCY_TITLE+"\n**[CURRENT SCORES]**\n";
 	let grps = data.leaderboards[leaderboardID].groups;
 
 	//ctx.reply("Generating score text..");
@@ -415,10 +415,10 @@ generateScoreText = (ctx, leaderboardID)=>{
 				out+="🥉 ";
 				break;
 			default:
-				out+=parseInt(i+1)+". ";
+				out+="**"+parseInt(i+1)+". ";
 		}
 
-		out+=grpArr[i].name+" - "+grpArr[i].score+"pts\n";
+		out+=grpArr[i].name+"** - "+grpArr[i].score+"pts\n";
 	}
 
 	return out;
@@ -466,6 +466,7 @@ displayScores = (ctx)=>{
 	ctx.reply(outputText);
 }
 
+bot.command('score', displayScores);
 bot.command('scores', displayScores);
 bot.command('show', displayScores);
 
