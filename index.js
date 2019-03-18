@@ -19,12 +19,10 @@ Add the secret API key to Now config
 
 */
 
-
 /* RUNNING IN NODE JS:
 1) now -e BOT_TOKEN=@brmcgamesleaderboard-api-key --public
 2) npm start
 (Note that (2) will run (1) as defined in the start script)
-
 
 */
 
@@ -379,6 +377,62 @@ bot.command('newleaderboard', (ctx)=>{
 	ctx.reply("[INFO] Leaderboard generated and linked to this Telegram "+ctx.chat.type+". @brmcgamesleaderboardbot has sent you the admin password in its private chat. Remember to forward it to your admins!");
 });
 
+bot.command('deleteleaderboard', (ctx)=>{
+	let _id = ctx.message.from.id;
+
+	if(ctx.chat.type=="private"){
+		return ctx.reply(
+			"[ERROR] This command can only be executed in a GROUP/CHANNEL linked to a leaderboard!",
+			Extra.inReplyTo(ctx.message.message_id)
+		);
+	}
+
+	data.retrieveAll(ctx); //retrieve here because bot might not have retrieved data (rmb we are in private chat) yet.
+
+	if(getAdminPrivilege(_id)!=MASTER){
+		return ctx.reply(
+			"[ERROR] You need to be a master admin to delete a leaderboard!",
+			Extra.inReplyTo(ctx.message.message_id)
+		);
+	}
+
+	if( !data.leaderboards.hasOwnProperty(ctx.chat.id) ){
+		return ctx.reply(
+			"[ERROR] No leaderboard associated with this group to delete!",
+			Extra.inReplyTo(ctx.message.message_id)
+		);
+	}
+
+	//Send a message with a confirm yes or no
+	ctx.reply(
+		FANCY_TITLE+"[WARNING] Are you sure you want to delete this leaderboard? This process cannot be undone!"
+		, Extra
+			.inReplyTo(ctx.message.message_id)
+			.markup((m) => m.inlineKeyboard(
+				[
+					m.callbackButton("Yes","confirm:deleteleaderboard:"+ctx.chat.id),
+					m.callbackButton("No","cancel")
+				]
+			))
+	);
+});
+
+deleteLeaderboard = (ctx, leaderboardID)=>{
+	data.retrieveAll(ctx);
+
+	let leaderboard = data.leaderboards[leaderboardID];
+	let pwd = leaderboard.password;
+
+	//Delete both leaderboard AND password entry
+	delete data.leaderboards[leaderboardID];
+	delete data.passwords[pwd];
+
+	//TODO: Delete admins as well?
+
+
+	data.saveAll();
+}
+
 //================LEADERBOARD GROUP HANDLING=================//
 generateScoreText = (ctx, leaderboardID)=>{
 	data.retrieveAll();
@@ -437,7 +491,7 @@ displayScores = (ctx)=>{
 	let leaderboardID = (priv==NORMAL)?getAdminLeaderboard(id).id:chat_id;
 	let grpObj = data.leaderboards[leaderboardID].groups;
 
-	if(Object.keys(grpObj).length === 0){ //No groups added yet
+	if(grpObj == null || typeof grpObj == "undefined" || Object.keys(grpObj).length == 0){ //No groups added yet
 		ctx.reply(
 			"[INFO] No groups added yet! Use /newgroup to add a new group!"
 			, Extra.inReplyTo(ctx.message.message_id)
@@ -498,9 +552,10 @@ newGroup = (ctx, name)=>{
 	//name.replace(_reg, "");
 
 	let leaderboardID = (priv==MASTER)?ctx.chat.id:getAdminLeaderboard(id).id;
+	let leaderboard = data.leaderboards[leaderboardID];
 	let hashed_name = sha1_hash(name); //avoid problems with spaces and other random characters
 
-	let grpObj = data.leaderboards[leaderboardID].groups;
+	let grpObj = leaderboard.groups;
 
 	if(grpObj.hasOwnProperty(hashed_name)){
 		return ctx.reply(
@@ -655,7 +710,7 @@ _generateScoreKeyboard = (m, grpData, buttonsPerRow=3)=>{
 			tempArr.push(
 				m.callbackButton(
 					dscores[ind],
-					"score:"+grpData.leaderboard+":"+sha1_hash(grpData.name)+":"+dscores[ind]
+					"addscore:"+grpData.leaderboard+":"+sha1_hash(grpData.name)+":"+dscores[ind]
 				)
 			);
 		}
@@ -668,12 +723,11 @@ _generateScoreKeyboard = (m, grpData, buttonsPerRow=3)=>{
 bot.on('callback_query', (ctx)=>{
 	hearing.clear();
 
-	/*
 	if(ctx.callbackQuery.data.toLowerCase() == "cancel"){
 		ctx.answerCallbackQuery("Cancel!");
+		ctx.telegram.deleteMessage(ctx.chat.id, );
 		return;
 	}
-	*/
 
 	data.retrieveAll(ctx);
 
@@ -705,9 +759,7 @@ bot.on('callback_query', (ctx)=>{
 
 		ctx.answerCallbackQuery(grpData.name+" selected!");
 	}
-	else if(info[0]=="score"){
-		_log("Update score for ");
-
+	else if(info[0]=="addscore"){
 		if(getAdminPrivilege(_id)!=MASTER && typeof leaderboard.id!="undefined" && leaderboard.id!=leaderboardID){
 			//ctx.reply("[ERROR] Only admins can update score!");
 			return ctx.answerCbQuery("[ERROR] Only admins can update score!");
@@ -715,6 +767,15 @@ bot.on('callback_query', (ctx)=>{
 
 		let deltaScore = parseInt(info[3]);
 		addScore(leaderboardID, hashed_group_name, deltaScore, ctx);
+	}
+	else if(info[0] == "confirm"){
+		let leaderboard_title;
+		if(info[1] == "deleteleaderboard"){
+			leaderboardID = info[2];
+			leaderboard_title = data.leaderboards[leaderboardID].name;
+			deleteLeaderboard(ctx, leaderboardID);
+			return ctx.answerCbQuery("Leaderboard in "+leaderboard_title+" has been deleted.");
+		}
 	}
 
 	return;
@@ -769,6 +830,8 @@ bot.hears("❓ Help ❓", (ctx)=>{
 
 //Help Message
 _helpMessageDisplay = (ctx)=>{
+	hearing.clear();
+
 	data.retrieveAll(ctx);
 
 	let priv = getAdminPrivilege(ctx.message.from.id);
