@@ -429,8 +429,7 @@ deleteLeaderboard = (ctx, leaderboardID)=>{
 
 	//TODO: Delete admins as well?
 
-
-	data.saveAll();
+	data.saveAll(ctx);
 }
 
 //================LEADERBOARD GROUP HANDLING=================//
@@ -633,7 +632,7 @@ bot.command('update', (ctx)=>{
 	let id = ctx.message.from.id;
 	let priv = getAdminPrivilege(id);
 
-	if(priv != NORMAL){
+	if(priv == NONE || (priv==MASTER && ctx.chat.type!="private")){
 		ctx.reply(
 			"[ERROR] Only specific admins of a leaderboard can update groups! Activate your admin privileges using /admin <password>"
 			//, Extra.inReplyTo(ctx.message.message_id)
@@ -641,7 +640,7 @@ bot.command('update', (ctx)=>{
 		return;
 	}
 
-	let leaderboard = getAdminLeaderboard(id);
+	let leaderboard = (priv==MASTER)?ctx.chat.id:getAdminLeaderboard(id);
 
 	let grpObj = data.leaderboards[leaderboard.id].groups;
 
@@ -724,7 +723,7 @@ bot.on('callback_query', (ctx)=>{
 	hearing.clear();
 
 	if(ctx.callbackQuery.data.toLowerCase() == "cancel"){
-		ctx.answerCallbackQuery("Cancel!");
+		ctx.answerCbQuery("Cancel!");
 		//TODO: Delete message after cancel
 		ctx.telegram.deleteMessage(ctx.callbackQuery.chat.id, ctx.callbackQuery.message.message_id);
 		return;
