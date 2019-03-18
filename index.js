@@ -632,7 +632,7 @@ bot.command('update', (ctx)=>{
 	let id = ctx.message.from.id;
 	let priv = getAdminPrivilege(id);
 
-	if(priv == NONE || (priv==MASTER && ctx.chat.type!="private")){
+	if(priv == NONE || (priv==MASTER && ctx.chat.type=="private")){
 		ctx.reply(
 			"[ERROR] Only specific admins of a leaderboard can update groups! Activate your admin privileges using /admin <password>"
 			//, Extra.inReplyTo(ctx.message.message_id)
