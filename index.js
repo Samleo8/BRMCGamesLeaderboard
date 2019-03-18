@@ -635,7 +635,7 @@ bot.command('update', (ctx)=>{
 
 	if(priv != NORMAL){
 		ctx.reply(
-			"[ERROR] Only specific admins of a leaderboard can add groups! Activate your admin privileges using /admin <password>"
+			"[ERROR] Only specific admins of a leaderboard can update groups! Activate your admin privileges using /admin <password>"
 			//, Extra.inReplyTo(ctx.message.message_id)
 		);
 		return;
@@ -725,7 +725,8 @@ bot.on('callback_query', (ctx)=>{
 
 	if(ctx.callbackQuery.data.toLowerCase() == "cancel"){
 		ctx.answerCallbackQuery("Cancel!");
-		ctx.telegram.deleteMessage(ctx.chat.id, );
+		//TODO: Delete message after cancel
+		//ctx.telegram.deleteMessage(ctx.chat.id, ctx.);
 		return;
 	}
 
@@ -734,7 +735,7 @@ bot.on('callback_query', (ctx)=>{
 	let info = ctx.callbackQuery.data.split(":");
 	let hashed_group_name, leaderboardID;
 
-	leaderboardID = info[1];
+	leaderboardID = (info[0]=="confirm")?info[2]:info[1];
 	hashed_group_name = info[2];
 
 	let grpData = data.leaderboards[leaderboardID].groups[hashed_group_name];
@@ -771,7 +772,6 @@ bot.on('callback_query', (ctx)=>{
 	else if(info[0] == "confirm"){
 		let leaderboard_title;
 		if(info[1] == "deleteleaderboard"){
-			leaderboardID = info[2];
 			leaderboard_title = data.leaderboards[leaderboardID].name;
 			deleteLeaderboard(ctx, leaderboardID);
 			return ctx.answerCbQuery("Leaderboard in "+leaderboard_title+" has been deleted.");
