@@ -726,7 +726,7 @@ bot.on('callback_query', (ctx)=>{
 	if(ctx.callbackQuery.data.toLowerCase() == "cancel"){
 		ctx.answerCallbackQuery("Cancel!");
 		//TODO: Delete message after cancel
-		//ctx.telegram.deleteMessage(ctx.chat.id, ctx.);
+		ctx.telegram.deleteMessage(ctx.callbackQuery.chat.id, ctx.callbackQuery.message.message_id);
 		return;
 	}
 
