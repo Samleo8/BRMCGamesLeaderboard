@@ -661,7 +661,8 @@ bot.command('update', (ctx)=>{
 });
 
 bot.command('deletegroup',(ctx)=>{
-	//TODO: Group and leaderboard deleting/editing
+	//TODO: Group deleting/editing
+
 });
 
 _generateGroupKeyboard = (m, grpObj, buttonsPerRow=3)=>{
@@ -690,7 +691,7 @@ _generateGroupKeyboard = (m, grpObj, buttonsPerRow=3)=>{
 	if(cnt!=0){
 		keyboard.push(tempArr);
 	}
-	//keyboard.push(m.callbackButton("Cancel","cancel"));
+	keyboard.push(m.callbackButton("Cancel","cancel"));
 
 	return keyboard;
 }
@@ -715,6 +716,7 @@ _generateScoreKeyboard = (m, grpData, buttonsPerRow=3)=>{
 		}
 		keyboard.push(tempArr);
 	}
+	keyboard.push(m.callbackButton("Cancel","cancel"));
 
 	return keyboard;
 }
@@ -724,11 +726,7 @@ bot.on('callback_query', (ctx)=>{
 
 	if(ctx.callbackQuery.data.toLowerCase() == "cancel"){
 		ctx.answerCbQuery("Cancel!");
-		//TODO: Delete message after cancel
-		console.log("IM HERE "+JSON.stringify(ctx.callbackQuery,null,4))
-		console.log("IM HERE TOO! "+ctx.message.message_id+" "+ctx.chat.id);
-
-		ctx.telegram.deleteMessage(ctx.chat.id, ctx.message.message_id);
+		ctx.telegram.deleteMessage(ctx.chat.id, ctx.callbackQuery.message.message_id);
 		return;
 	}
 
