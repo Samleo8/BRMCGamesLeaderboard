@@ -60,7 +60,7 @@ const commandsMessage =
 
 const commandsAdminMessage =
 "/update - Update group scores [admin].\n"+
-"/newgroup <group name> - Create a new group with name <group name> score 0 [admin]. (Alternative command '/newgroup' then type names)\n";
+"/newgroup <group name> - Create a new group with name <group name> score 0 [admin]. (Alternative command '/newgroup' then type names)\n"+
 "/deletegroup <group name> - Delete group with name <group name> [admin].\n";
 
 const commandsMasterMessage =
