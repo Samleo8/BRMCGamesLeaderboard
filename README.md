@@ -6,4 +6,5 @@ Live leaderboard controlled by admin and sent to relevant group chats!
 
 
 Created for BRMC 123 Camp 2019, by Samuel Leong.
-For more info, contact Samuel at  [samleocw+telegram@gmail.com](mailto:samleocw+telegram@gmail.com)
+
+For more info, contact Samuel [here](mailto:samleocw+telegram@gmail.com)
