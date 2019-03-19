@@ -640,9 +640,9 @@ bot.command('update', (ctx)=>{
 		return;
 	}
 
-	let leaderboard = (priv==MASTER)?ctx.chat.id:getAdminLeaderboard(id);
+	let leaderboardID = (priv==MASTER)?ctx.chat.id:getAdminLeaderboard(id).id;
 
-	let grpObj = data.leaderboards[leaderboard.id].groups;
+	let grpObj = data.leaderboards[leaderboardID].groups;
 
 	if(Object.keys(grpObj).length === 0){ //No groups added yet
 		ctx.reply(

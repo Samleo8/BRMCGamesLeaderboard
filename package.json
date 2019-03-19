@@ -1,6 +1,6 @@
 {
   "name": "brmcgamesleaderboard",
-  "version": "1.8.4",
+  "version": "1.8.5",
   "description": "Live Leaderboard for Games at camps. Created by Samuel Leong for BRMC 123Camp 2019",
   "main": "index.js",
   "scripts": {
