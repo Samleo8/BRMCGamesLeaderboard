@@ -725,7 +725,7 @@ bot.on('callback_query', (ctx)=>{
 	hearing.clear();
 
 	if(ctx.callbackQuery.data.toLowerCase() == "cancel"){
-		ctx.answerCbQuery("Cancel!");
+		ctx.answerCbQuery("Cancelled!");
 		ctx.telegram.deleteMessage(ctx.chat.id, ctx.callbackQuery.message.message_id);
 		return;
 	}
@@ -736,6 +736,19 @@ bot.on('callback_query', (ctx)=>{
 	let hashed_group_name, leaderboardID;
 
 	leaderboardID = (info[0]=="confirm")?info[2]:info[1];
+
+	if(info[0] == "confirm"){
+		let leaderboard_title;
+		if(info[1] == "deleteleaderboard"){
+			leaderboard_title = data.leaderboards[leaderboardID].name;
+			deleteLeaderboard(ctx, leaderboardID);
+
+			let _info_msg = "Leaderboard in "+leaderboard_title+" has been deleted by "+_getName(_id);
+			ctx.reply(_info_msg);
+			return ctx.answerCbQuery(_info_msg);
+		}
+	}
+
 	hashed_group_name = info[2];
 
 	let grpData = data.leaderboards[leaderboardID].groups[hashed_group_name];
@@ -768,17 +781,6 @@ bot.on('callback_query', (ctx)=>{
 
 		let deltaScore = parseInt(info[3]);
 		addScore(leaderboardID, hashed_group_name, deltaScore, ctx);
-	}
-	else if(info[0] == "confirm"){
-		let leaderboard_title;
-		if(info[1] == "deleteleaderboard"){
-			leaderboard_title = data.leaderboards[leaderboardID].name;
-			deleteLeaderboard(ctx, leaderboardID);
-
-			let _info_msg = "Leaderboard in "+leaderboard_title+" has been deleted by "+_getName(_id);
-			ctx.reply(_info_msg);
-			return ctx.answerCbQuery(_info_msg);
-		}
 	}
 
 	return;
