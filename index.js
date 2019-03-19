@@ -735,20 +735,21 @@ bot.on('callback_query', (ctx)=>{
 	let info = ctx.callbackQuery.data.split(":");
 	let hashed_group_name, leaderboardID;
 
-	leaderboardID = (info[0]=="confirm")?info[2]:info[1];
-
 	if(info[0] == "confirm"){
+		leaderboardID = info[2];
 		let leaderboard_title;
+
 		if(info[1] == "deleteleaderboard"){
 			leaderboard_title = data.leaderboards[leaderboardID].name;
 			deleteLeaderboard(ctx, leaderboardID);
 
-			let _info_msg = "Leaderboard in "+leaderboard_title+" has been deleted by "+_getName(_id);
+			let _info_msg = "Leaderboard in "+leaderboard_title+" has been deleted by "+_getName(ctx.message.from.id);
 			ctx.reply(_info_msg);
 			return ctx.answerCbQuery(_info_msg);
 		}
 	}
 
+	leaderboardID = info[1];
 	hashed_group_name = info[2];
 
 	let grpData = data.leaderboards[leaderboardID].groups[hashed_group_name];
@@ -787,6 +788,7 @@ bot.on('callback_query', (ctx)=>{
 });
 
 addScore = (leaderboardID, grpID, score, ctx)=>{
+	//TODO: Update scores on button click
 	data.retrieve("leaderboards",ctx);
 
 	let _msgId = ctx.callbackQuery.message.message_id || ctx.message.message_id;
