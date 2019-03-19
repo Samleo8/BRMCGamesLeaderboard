@@ -940,9 +940,9 @@ _log = (ctx, msg)=>{
 
 //Get user's name from ctx
 _getName = (ctx)=>{
-    let username = ctx.message.from.username.toString();
-	let first_name = ctx.message.from.first_name.toString();
-	let last_name = ctx.message.from.last_name.toString();
+    let username = ctx.message.from.username;
+	let first_name = ctx.message.from.first_name;
+	let last_name = ctx.message.from.last_name;
 
 	if(first_name && last_name) return first_name+" "+last_name;
     if(!first_name && !last_name) return username;
