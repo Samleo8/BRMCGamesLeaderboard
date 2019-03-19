@@ -676,6 +676,16 @@ bot.command('deletegroup',(ctx)=>{
 	let id = ctx.message.from.id;
 	let priv = getAdminPrivilege(id);
 
+	let grpName = ctx.state.command.args;
+
+	if(grpName == null || grpName == undefined || grpName.length<=0 || !grpName){
+		ctx.reply(
+			FANCY_TITLE+"[ERROR] The correct command is /deletegroup <group name>",
+			Extra.inReplyTo(ctx.message.message_id)
+		);
+		return;
+	}
+
 	//If chat is grp/channel but no leaderboard here
 	if(ctx.chat.type != "private" && !data.leaderboards.hasOwnProperty(ctx.chat.id)){
 		return ctx.reply(
@@ -698,7 +708,25 @@ bot.command('deletegroup',(ctx)=>{
 		return;
 	}
 
+	let leaderboardID = (priv==MASTER)?ctx.chat.id:getAdminLeaderboard(id).id;
+	let grps = data.leaderboards[leaderboardID].groups;
+	let grpID = sha1_hash(grpName);
 
+	if(!grps.hasOwnProperty(grpID)){
+		ctx.reply(
+			"[ERROR] No such group with the name "+grpName+"!",
+			Extra.inReplyTo(ctx.message.message_id)
+		);
+		return;
+	}
+
+	delete data.leaderboards[leaderboardID].groups[grpID];
+	ctx.reply(
+		"[INFO] Group "+grpName+" has been deleted from the leaderboard!"
+		, Extra.inReplyTo(ctx.message.message_id)
+	);
+
+	data.saveAll(ctx);
 });
 
 _generateGroupKeyboard = (m, grpObj, buttonsPerRow=3)=>{
