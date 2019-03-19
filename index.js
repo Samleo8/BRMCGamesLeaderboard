@@ -807,7 +807,7 @@ bot.on('callback_query', (ctx)=>{
 			leaderboard_title = data.leaderboards[leaderboardID].name;
 			deleteLeaderboard(ctx, leaderboardID);
 
-			let _info_msg = "Leaderboard in "+leaderboard_title+" has been deleted by "+_getName(ctx.callbackQuery.message.from.id);
+			let _info_msg = "Leaderboard in "+leaderboard_title+" has been deleted by "+_getName(ctx.callbackQuery.from.id);
 			ctx.reply(_info_msg);
 			return ctx.answerCbQuery(_info_msg);
 		}
