@@ -725,7 +725,10 @@ bot.on('callback_query', (ctx)=>{
 	if(ctx.callbackQuery.data.toLowerCase() == "cancel"){
 		ctx.answerCbQuery("Cancel!");
 		//TODO: Delete message after cancel
-		ctx.telegram.deleteMessage(ctx.callbackQuery.chat.id, ctx.callbackQuery.message.message_id);
+		console.log("IM HERE "+JSON.stringify(ctx.callbackQuery,null,4))
+		console.log("IM HERE TOO! "+ctx.message.message_id+" "+ctx.chat.id);
+
+		ctx.telegram.deleteMessage(ctx.chat.id, ctx.message.message_id);
 		return;
 	}
 
@@ -773,7 +776,10 @@ bot.on('callback_query', (ctx)=>{
 		if(info[1] == "deleteleaderboard"){
 			leaderboard_title = data.leaderboards[leaderboardID].name;
 			deleteLeaderboard(ctx, leaderboardID);
-			return ctx.answerCbQuery("Leaderboard in "+leaderboard_title+" has been deleted.");
+
+			let _info_msg = "Leaderboard in "+leaderboard_title+" has been deleted by "+_getName(_id);
+			ctx.reply(_info_msg);
+			return ctx.answerCbQuery(_info_msg);
 		}
 	}
 
@@ -840,7 +846,7 @@ _helpMessageDisplay = (ctx)=>{
 		 +commandsAdminMessage+"\n";
 
     if(priv == MASTER){
-        msg+=commandsMasterMessage+"\n";
+        msg+=commandsMasterMessage+"\n\n";
     }
 
 	msg+=_getName(ctx)+" is ";
