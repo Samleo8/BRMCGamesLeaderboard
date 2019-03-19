@@ -428,6 +428,12 @@ deleteLeaderboard = (ctx, leaderboardID)=>{
 	delete data.passwords[pwd];
 
 	//TODO: Delete admins as well?
+	for(var adm in data.admins){
+		if(!data.admins.hasOwnProperty(i)) return;
+		if(data.admins[adm].password == pwd){
+			delete data.admins[adm];
+		}
+	}
 
 	data.saveAll(ctx);
 }
@@ -662,6 +668,36 @@ bot.command('update', (ctx)=>{
 
 bot.command('deletegroup',(ctx)=>{
 	//TODO: Group deleting/editing
+	hearing.clear();
+
+	data.retrieve("admins",ctx);
+	data.retrieve("leaderboards",ctx);
+
+	let id = ctx.message.from.id;
+	let priv = getAdminPrivilege(id);
+
+	//If chat is grp/channel but no leaderboard here
+	if(ctx.chat.type != "private" && !data.leaderboards.hasOwnProperty(ctx.chat.id)){
+		return ctx.reply(
+			"[ERROR] There is no leaderboard associated with this telegram group.\nGet the master admin to create a /newleaderboard"
+		);
+	}
+
+	if(priv==NONE){
+		ctx.reply(
+			"[ERROR] Only specific admins of this leaderboard can add groups! Activate your admin privileges using /admin <password>",
+			Extra.inReplyTo(ctx.message.message_id)
+		);
+		return;
+	}
+	else if(priv==MASTER && ctx.chat.type=="private"){
+		ctx.reply(
+			"[ERROR] Master admins can only send the /newgroup command in Telegram group/channels that has a leaderboard tagged to them.",
+			Extra.inReplyTo(ctx.message.message_id)
+		);
+		return;
+	}
+
 
 });
 
