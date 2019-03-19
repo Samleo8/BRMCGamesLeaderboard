@@ -691,7 +691,7 @@ _generateGroupKeyboard = (m, grpObj, buttonsPerRow=3)=>{
 	if(cnt!=0){
 		keyboard.push(tempArr);
 	}
-	keyboard.push(m.callbackButton("Cancel","cancel"));
+	keyboard.push([m.callbackButton("Cancel","cancel")]);
 
 	return keyboard;
 }
@@ -716,7 +716,7 @@ _generateScoreKeyboard = (m, grpData, buttonsPerRow=3)=>{
 		}
 		keyboard.push(tempArr);
 	}
-	keyboard.push(m.callbackButton("Cancel","cancel"));
+	keyboard.push([m.callbackButton("Cancel","cancel")]);
 
 	return keyboard;
 }
