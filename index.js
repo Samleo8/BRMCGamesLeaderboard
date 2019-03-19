@@ -60,7 +60,8 @@ const commandsMessage =
 
 const commandsAdminMessage =
 "/update - Update group scores [admin].\n"+
-"/newgroup <group name> - Create a new group with score 0 [admin].\n";
+"/newgroup <group name> - Create a new group with name <group name> score 0 [admin]. (Alternative command '/newgroup' then type names)\n";
+"/deletegroup <group name> - Delete group with name <group name> [admin].\n";
 
 const commandsMasterMessage =
 "/newleaderboard - Creates a new leaderboard. Command MUST be given in the Telegram group/channel that is is linked to. Generates passcode for that leaderboard to be given to admins [master].\n"+
@@ -702,7 +703,7 @@ bot.command('deletegroup',(ctx)=>{
 	}
 	else if(priv==MASTER && ctx.chat.type=="private"){
 		ctx.reply(
-			"[ERROR] Master admins can only send the /newgroup command in Telegram group/channels that has a leaderboard tagged to them.",
+			"[ERROR] Master admins can only send the /deletegroup command in Telegram group/channels that has a leaderboard tagged to them.",
 			Extra.inReplyTo(ctx.message.message_id)
 		);
 		return;
