@@ -1,6 +1,6 @@
 # BRMC Games Leaderboard
 
-Telegram bot for controlling of Live Leaderboard for BRMC Camp Games.
+Telegram bot ((@brmcgamesleaderboardbot)[https://t.me/brmcgamesleaderboardbot]) for controlling of Live Leaderboard for BRMC Camp Games.
 
 Live leaderboard controlled by admin and sent to relevant group chats!
 
