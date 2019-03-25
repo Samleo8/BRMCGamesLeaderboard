@@ -817,7 +817,14 @@ bot.on('callback_query', (ctx)=>{
 	leaderboardID = info[1];
 	hashed_group_name = info[2];
 
-	let grpData = data.leaderboards[leaderboardID].groups[hashed_group_name];
+	let grpData;
+
+	if(data.leaderboards.hasOwnProperty(leaderboardID)){
+		grpData = data.leaderboards[leaderboardID].groups[hashed_group_name];
+	}
+	else{
+		return ctx.answerCbQuery("[ERROR] Leaderboard or group does not exist");
+	}
 
 	let _id = ctx.callbackQuery.from.id;
 	let leaderboard = getAdminLeaderboard(_id);
@@ -837,7 +844,7 @@ bot.on('callback_query', (ctx)=>{
 				))
 		);
 
-		ctx.answerCallbackQuery(grpData.name+" selected!");
+		ctx.answerCbQuery(grpData.name+" selected!");
 	}
 	else if(info[0]=="addscore"){
 		if(getAdminPrivilege(_id)!=MASTER && typeof leaderboard.id!="undefined" && leaderboard.id!=leaderboardID){
