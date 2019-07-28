@@ -13,7 +13,9 @@
     "url": "git+https://github.com/Samleo8/BRMCGamesLeaderboard.git"
   },
   "keywords": [
-    "leaderboard", "games", "brmc"
+    "leaderboard",
+    "games",
+    "brmc"
   ],
   "author": "Samuel Leong <samleocw+telegram@gmail.com>",
   "license": "ISC",
@@ -22,7 +24,7 @@
   },
   "homepage": "https://github.com/Samleo8/BRMCGamesLeaderboard#README.md",
   "dependencies": {
-    "axios": "^0.18.0",
+    "axios": "^0.18.1",
     "crypto": "^1.0.1",
     "micro-bot": "^2.5.3",
     "telegraf": "^3.27.1",
