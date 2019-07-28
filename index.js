@@ -8,14 +8,14 @@ REFERENCES:
 
 /* CONFIGURATION:
 Required Node libraries: telegraf, micro-bot, axios, telegraf-command-parts, fs, crypto
-    npm install --save telegraf telegraf-command-parts micro-bot fs crypto axios
+	npm install --save telegraf telegraf-command-parts micro-bot fs crypto axios
 
 Now CLI has been installed with
-    npm install -g now
+	npm install -g now
 
 Add the secret API key to Now config
 [https://zeit.co/docs/v2/deployments/environment-variables-and-secrets/#securing-environment-variables-using-secrets]:
-    now secret add brmcgamesleaderboard-api-key <api-key>
+	now secret add brmcgamesleaderboard-api-key <api-key>
 
 */
 
@@ -30,11 +30,11 @@ Add the secret API key to Now config
 
 //Initialising of Libraries
 const { Markup, Extra } = require('micro-bot');
-const Telegraf  = require('micro-bot');
+const Telegraf = require('micro-bot');
 
 const bot = new Telegraf(
-    process.env.BOT_TOKEN,
-    { username: "brmcgamesleaderboardbot" }
+	process.env.BOT_TOKEN,
+	{ username: "brmcgamesleaderboardbot" }
 );
 bot.use(Telegraf.log());
 
@@ -43,7 +43,7 @@ const fs = require('fs');
 const crypto = require('crypto');
 
 sha1_hash = (input)=>{
-    return crypto.createHash('sha1').update(JSON.stringify(input)).digest('hex');
+	return crypto.createHash('sha1').update(JSON.stringify(input)).digest('hex');
 }
 
 const commandParts = require('telegraf-command-parts');
@@ -71,65 +71,65 @@ const commandsMasterMessage =
 //Fancy title
 const FANCY_TITLE = "🎉 📊 BRMC Games Leaderboard 📊 🎉 \n";
 
-let i = 0, j = 0;
+//let i = 0, j = 0;
 
 //================DATA HANDLING=================//
 const MASTER = 0, NORMAL = 1, NONE = -1;
 
 //Use data object for scalability
 let data = {
-    "admins":{},
-    "leaderboards":{},
-    "passwords":{  //SHA-1 hashed
-        "c9d19f7b00d8cb12425fdcdc3f86717f0736c7b5":{ //Master admin
-            "level": MASTER, //master
-            "leaderboard":{
-                "id": 0, //master
-                "name":"all"
-            }
-        }
-    },
+	"admins":{},
+	"leaderboards":{},
+	"passwords":{  //SHA-1 hashed
+		"c9d19f7b00d8cb12425fdcdc3f86717f0736c7b5":{ //Master admin
+			"level": MASTER, //master
+			"leaderboard":{
+				"id": 0, //master
+				"name":"all"
+			}
+		}
+	},
 
-    "retrieve":function(dataStr, ctx){
-        //Check if file exists; if not, create it to prevent problems with access permissions
-        if(!fs.existsSync(dataStr+".json")){
-            _log(ctx,dataStr+".json doesn't exist.. creating file..");
+	"retrieve":function(dataStr, ctx){
+		//Check if file exists; if not, create it to prevent problems with access permissions
+		if(!fs.existsSync(dataStr+".json")){
+			_log(ctx,dataStr+".json doesn't exist.. creating file..");
 
-            fs.writeFileSync(
-                dataStr+".json",
-                JSON.stringify(data[dataStr],null,4)
-            );
+			fs.writeFileSync(
+				dataStr+".json",
+				JSON.stringify(data[dataStr],null,4)
+			);
 
-            _log(ctx,"File "+dataStr+".json created!");
-            return this[dataStr];
-        }
+			_log(ctx,"File "+dataStr+".json created!");
+			return this[dataStr];
+		}
 
-        //Retrieve data from leaderboard.json
-        this[dataStr] = JSON.parse(
-            fs.readFileSync(dataStr+".json", 'utf8')
-        );
+		//Retrieve data from leaderboard.json
+		this[dataStr] = JSON.parse(
+			fs.readFileSync(dataStr+".json", 'utf8')
+		);
 
-        return this[dataStr];
-    },
-    "retrieveAll":function(ctx){
-        this.retrieve("admins",ctx);
-        this.retrieve("passwords",ctx);
-        this.retrieve("leaderboards",ctx);
-    },
+		return this[dataStr];
+	},
+	"retrieveAll":function(ctx){
+		this.retrieve("admins",ctx);
+		this.retrieve("passwords",ctx);
+		this.retrieve("leaderboards",ctx);
+	},
 
-    "save":function(dataStr, ctx){
-        fs.writeFileSync(
-            dataStr+".json",
-            JSON.stringify(this[dataStr],null,4)
-        );
+	"save":function(dataStr, ctx){
+		fs.writeFileSync(
+			dataStr+".json",
+			JSON.stringify(this[dataStr],null,4)
+		);
 
-        //_log(ctx,"Saved "+dataStr+" data: "+JSON.stringify(this[dataStr],null,4));
-    },
-    "saveAll":function(ctx){
-        this.save("admins",ctx);
-        this.save("passwords",ctx);
-        this.save("leaderboards",ctx);
-    }
+		//_log(ctx,"Saved "+dataStr+" data: "+JSON.stringify(this[dataStr],null,4));
+	},
+	"saveAll":function(ctx){
+		this.save("admins",ctx);
+		this.save("passwords",ctx);
+		this.save("leaderboards",ctx);
+	}
 };
 
 //For checking if bot hears anything, and what is it looking out for
@@ -153,7 +153,7 @@ hearing = {
 init = (ctx)=>{
 	hearing.clear();
 
-    data.retrieveAll(ctx);
+	data.retrieveAll(ctx);
 
 	_helpMessageDisplay(ctx);
 }
@@ -168,7 +168,7 @@ bot.command('start', (ctx)=>{ init(ctx); } );
 }*/
 
 bot.command('admin', (ctx)=>{
-    let id = ctx.message.from.id;
+	let id = ctx.message.from.id;
 	let pwd = ctx.state.command.args;
 
 	hearing.clear();
@@ -180,19 +180,19 @@ bot.command('admin', (ctx)=>{
 		);
 	}
 
-    if(ctx.message.from.is_bot){
-        return ctx.reply(
+	if(ctx.message.from.is_bot){
+		return ctx.reply(
 			"[ERROR] Only humans can access admin rights.",
 			Extra.inReplyTo(ctx.message.message_id)
 		);
-    }
+	}
 
-    //Retrieve data in case
-    data.retrieveAll(ctx);
+	//Retrieve data in case
+	data.retrieveAll(ctx);
 
-    //Hash password and compare to see if valid
+	//Hash password and compare to see if valid
 	let pwd_hashed = sha1_hash(pwd);
-    //_log(ctx,pwd+" "+pwd_hashed);
+	//_log(ctx,pwd+" "+pwd_hashed);
 
 	if(data.passwords.hasOwnProperty(pwd_hashed)){
 		setAdmin(ctx, id, _getName(ctx), pwd_hashed);
@@ -203,7 +203,7 @@ bot.command('admin', (ctx)=>{
 		//*/
 		return;
 	}
-    else
+	else
 		return ctx.reply(
 			"[INFO] Incorrect Password!",
 			Extra.inReplyTo(ctx.message.message_id)
@@ -212,165 +212,162 @@ bot.command('admin', (ctx)=>{
 
 //Check if person is admin
 isAdmin = (_id)=>{
-    return data.admins.hasOwnProperty(_id);
+	return data.admins.hasOwnProperty(_id);
 }
 
 //Return admin privilege:
 /*
-    -1 - non-admin
-     0 - master admin
-    >0 - normal admin
+	-1 - non-admin
+	 0 - master admin
+	>0 - normal admin
 */
 getAdminPrivilege = (_id)=>{
-    if(!isAdmin(_id)) return -1;
-    return data.admins[_id].level;
+	if(!isAdmin(_id)) return -1;
+	return data.admins[_id].level;
 }
 
 //Return group obj that the admin is in charge of:
 /*
-    -1 - non-admin
+	-1 - non-admin
 	0 - master admin
 */
 getAdminLeaderboard = (_id)=>{
 	let priv = getAdminPrivilege(_id);
 
-    if(priv == NONE || priv == MASTER) return priv;
+	if(priv == NONE || priv == MASTER) return priv;
 
 	return data.admins[_id].leaderboard;
 }
 
 //Set admin by details
 setAdmin = (ctx, _id, _name, _hashedPassword)=>{
-    //ctx.reply("Setting admin rights for "+_name+":");
+	//ctx.reply("Setting admin rights for "+_name+":");
 
-    let _privilege = data.passwords[_hashedPassword].level;
+	let _privilege = data.passwords[_hashedPassword].level;
 
 	/* //Disable promotion check for debugging
-    if( isAdmin(_id) && _privilege>getAdminPrivilege(_id)){
-        //Already admin, no promotion
-        return ctx.reply("[ERROR] "+_name+" is already a master admin.");
-    }
+	if( isAdmin(_id) && _privilege>getAdminPrivilege(_id)){
+		//Already admin, no promotion
+		return ctx.reply("[ERROR] "+_name+" is already a master admin.");
+	}
 	//*/
 
-    if(_privilege == MASTER){
-        ctx.reply(_name+" is now "+((_privilege>=getAdminPrivilege(_id))?"promoted to ":" ")+"a master admin!\n"+commandsAdminMessage+"\n"+commandsMasterMessage);
-    }
-    else{
-        let groupName = data.passwords[_hashedPassword].leaderboard.name.toString();
-        ctx.reply(
+	if(_privilege == MASTER){
+		ctx.reply(_name+" is now "+((_privilege>=getAdminPrivilege(_id))?"promoted to ":" ")+"a master admin!\n"+commandsAdminMessage+"\n"+commandsMasterMessage);
+	}
+	else{
+		let groupName = data.passwords[_hashedPassword].leaderboard.name.toString();
+		ctx.reply(
 			_name+" is now an admin for Telegram group "+groupName+" !\n\n"+commandsAdminMessage
 			//, Extra.HTML()
 		);
-    }
+	}
 
 	data.admins[_id] = {
 		"name":_name,
 		"level":_privilege,
-        "password":_hashedPassword,
+		"password":_hashedPassword,
 		"leaderboard": data.passwords[_hashedPassword].leaderboard
 	};
 
-    data.save("admins",ctx);
+	data.save("admins",ctx);
 }
 
 //================LEADERBOARD SETUP=================//
 /* Master admin sets up leaderboard:
-    name, group to send to, password
+	name, group to send to, password
 */
 _generatePassword = (_len)=>{
-    const charset = "abcdefghijklmnopqstuvwxyzABCDEFGHIJKLMNOPQSTUVWXYZ0123456789";
+	const charset = "abcdefghijklmnopqstuvwxyzABCDEFGHIJKLMNOPQSTUVWXYZ0123456789";
 
-    if(_len == null || _len == undefined || typeof len == "undefined" || isNaN(_len) || _len < 8) _len = 8;
+	if(_len == null || _len == undefined || typeof len == "undefined" || isNaN(_len) || _len < 8) _len = 8;
 
-    let pwd = [], pwd_ok = false, pwd_hashed;
+	let pwd = [], pwd_ok = false, pwd_hashed;
 
-    while(!pwd_ok){
-        for(i=0;i<1000;i++){ //try max 1000 times
-            for(var i=0;i<_len;i++){
-                var _rand = getRandomInt(0,charset.length-1);
-                pwd.push(charset[_rand]);
-            }
+	while(!pwd_ok){
+		for(var i=0;i<1000;i++){ //try max 1000 times
+			for(var j=0;j<_len;j++){
+				var _rand = getRandomInt(0,charset.length-1);
+				pwd.push(charset[_rand]);
+			}
 
-            pwd = pwd.join("");
-            pwd_hashed = sha1_hash(pwd);
+			pwd = pwd.join("");
+			pwd_hashed = sha1_hash(pwd);
 
-            if( !data.passwords.hasOwnProperty(pwd_hashed) ){ //check if password is unique
-                pwd_ok = true;
-                break;
-            }
-        }
-        _len++; //if it doesnt work try adding to the length and try again
-    }
+			if( !data.passwords.hasOwnProperty(pwd_hashed) ){ //check if password is unique
+				pwd_ok = true;
+				break;
+			}
+		}
+		_len++; //if it doesnt work try adding to the length and try again
+	}
 
-    return {"raw":pwd, "hashed":pwd_hashed};
+	return {"raw":pwd, "hashed":pwd_hashed};
 }
-
-//Initialise Current Game object
-let scores = {};
 
 //Must be added from group
 bot.command('newleaderboard', (ctx)=>{
 	hearing.clear();
 
-    let _id = ctx.message.from.id;
+	let _id = ctx.message.from.id;
 
-    if(ctx.chat.type=="private"){
-        return ctx.reply(
+	if(ctx.chat.type=="private"){
+		return ctx.reply(
 			"[ERROR] You need to add a new leaderboard in a GROUP/CHANNEL!",
 			Extra.inReplyTo(ctx.message.message_id)
 		);
-    }
+	}
 
-    data.retrieveAll(ctx); //retrieve here because bot might not have retrieved data (rmb we are in private chat) yet.
+	data.retrieveAll(ctx); //retrieve here because bot might not have retrieved data (rmb we are in private chat) yet.
 
-    if(getAdminPrivilege(_id)!=MASTER){
-        return ctx.reply(
+	if(getAdminPrivilege(_id)!=MASTER){
+		return ctx.reply(
 			"[ERROR] You need to be a master admin to add a new leaderboard!",
 			Extra.inReplyTo(ctx.message.message_id)
 		);
-    }
+	}
 
-    if( data.leaderboards.hasOwnProperty(ctx.chat.id) ){
-        return ctx.reply(
+	if( data.leaderboards.hasOwnProperty(ctx.chat.id) ){
+		return ctx.reply(
 			"[ERROR] Leaderboard has already been linked to this group. /deleteleaderboard first.",
 			Extra.inReplyTo(ctx.message.message_id)
 		);
-    }
+	}
 
-    //Generate password for this particular leaderboard/Telegram group
-    _pwdObj = _generatePassword(10);
+	//Generate password for this particular leaderboard/Telegram group
+	let _pwdObj = _generatePassword(10);
 
-    //_log(ctx,JSON.stringify(ctx.chat));
+	//_log(ctx,JSON.stringify(ctx.chat));
 
-    //Add to the leaderboards
-    data.leaderboards[ctx.chat.id] = {
+	//Add to the leaderboards
+	data.leaderboards[ctx.chat.id] = {
 		"name": ctx.chat.title,
-        "password": _pwdObj.hashed,
-        "groups":{} //obj of group objects => name:{ leaderboard, name, hashed_name, score }
-    }
+		"password": _pwdObj.hashed,
+		"groups":{} //obj of group objects => name:{ leaderboard, name, hashed_name, score }
+	}
 
-    //Add to the password objects
-    data.passwords[_pwdObj.hashed] = {
-        "level":NORMAL, //admin
-        "leaderboard":{
-            "id": ctx.chat.id, //telegram group id [note: negative number]
-            "name":ctx.chat.title //telegram group name
-        }
-    }
+	//Add to the password objects
+	data.passwords[_pwdObj.hashed] = {
+		"level":NORMAL, //admin
+		"leaderboard":{
+			"id": ctx.chat.id, //telegram group id [note: negative number]
+			"name":ctx.chat.title //telegram group name
+		}
+	}
 
-    //Send private message to user
-    ctx.telegram.sendMessage(
-        ctx.message.from.id,
-        FANCY_TITLE+
-        "The password for the leaderboard in "+ctx.chat.title+" is:\n"+
-        _pwdObj.raw+"\n\n"+
-        "Remember to tell your admins to send /admin "+_pwdObj.raw+" in the PRIVATE @brmcgamesleaderboardbot CHAT to activate their admin privileges for this group."
-    );
+	//Send private message to user
+	ctx.telegram.sendMessage(
+		ctx.message.from.id,
+		FANCY_TITLE+
+		"The password for the leaderboard in "+ctx.chat.title+" is:\n"+
+		_pwdObj.raw+"\n\n"+
+		"Remember to tell your admins to send /admin "+_pwdObj.raw+" in the PRIVATE @brmcgamesleaderboardbot CHAT to activate their admin privileges for this group."
+	);
 
-    ctx.telegram.sendMessage(
-        ctx.message.from.id,
-        "/admin "+_pwdObj.raw
-    );
+	ctx.telegram.sendMessage(
+		ctx.message.from.id,
+		"/admin "+_pwdObj.raw
+	);
 
 	data.saveAll(ctx);
 
@@ -517,10 +514,10 @@ displayScores = (ctx)=>{
 	//If non-admin, the scores will only be revealed to them in the private chat
 	if(ctx.chat.type != "private" && priv==NONE){
 		//Send private message to user
-	    return ctx.telegram.sendMessage(
-	        ctx.message.from.id,
-	        outputText
-	    );
+		return ctx.telegram.sendMessage(
+			ctx.message.from.id,
+			outputText
+		);
 	}
 
 	ctx.reply(outputText);
@@ -616,7 +613,7 @@ bot.command('newgroup', (ctx)=>{
 		return;
 	}
 
-	grpName = ctx.state.command.args;
+	let grpName = ctx.state.command.args;
 
 	if(grpName == null || grpName == undefined || grpName.length<=0 || !grpName){
 		ctx.reply(
@@ -735,6 +732,7 @@ _generateGroupKeyboard = (m, grpObj, buttonsPerRow=3)=>{
 	//m is the Markup object
 	let keyboard = [], tempArr = [];
 	let cnt=0;
+	let _obj;
 
 	for(var i in grpObj){
 		_obj = grpObj[i];
@@ -915,13 +913,13 @@ _helpMessageDisplay = (ctx)=>{
 
 	let priv = getAdminPrivilege(ctx.message.from.id);
 
-    let msg = helpMessage;
-    msg+= commandsMessage+"\n"
+	let msg = helpMessage;
+	msg+= commandsMessage+"\n"
 		 +commandsAdminMessage+"\n";
 
-    if(priv == MASTER){
-        msg+=commandsMasterMessage+"\n\n";
-    }
+	if(priv == MASTER){
+		msg+=commandsMasterMessage+"\n\n";
+	}
 
 	msg+=_getName(ctx)+" is ";
 	switch(priv){
@@ -936,26 +934,26 @@ _helpMessageDisplay = (ctx)=>{
 			break;
 	}
 
-    return ctx.reply(msg);
+	return ctx.reply(msg);
 }
 
 //Display debug messages
 _log = (ctx, msg)=>{
-    console.log("[DEBUG] "+msg);
-    //if(getAdminPrivilege(ctx.message.from.id)==MASTER) ctx.reply("[DEBUG] "+msg);
+	console.log("[DEBUG] "+msg);
+	//if(getAdminPrivilege(ctx.message.from.id)==MASTER) ctx.reply("[DEBUG] "+msg);
 }
 
 //Get user's name from ctx
 _getName = (ctx)=>{
-    let username = ctx.message.from.username;
+	let username = ctx.message.from.username;
 	let first_name = ctx.message.from.first_name;
 	let last_name = ctx.message.from.last_name;
 
 	if(first_name && last_name) return first_name+" "+last_name;
-    if(!first_name && !last_name) return username;
+	if(!first_name && !last_name) return username;
 	if(first_name) return first_name;
 
-    return last_name;
+	return last_name;
 }
 
 bot.command('debug',(ctx)=>{
@@ -1001,17 +999,17 @@ module.exports = bot;
 //================MISC. FUNCTIONS=================//
 //Get random integer: [min,max]
 getRandomInt = (min, max)=>{
-    return Math.floor(Math.random() * (max - min + 1)) + min;
+	return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
 //Get random float: [min,max)
 getRandomFloatExcl = (min, max)=>{
-    return Math.random() * (max - min) + min;
+	return Math.random() * (max - min) + min;
 }
 
 //Remove duplicates in array
 removeDuplicates = (_array)=>{
-	let _i, arr = [];
+	let _i, _j, arr = [];
 	let found = false;
 	for(_i=0;_i<_array.length;_i++){
 		found = false;
@@ -1028,26 +1026,27 @@ removeDuplicates = (_array)=>{
 }
 
 String.prototype.toTitleCase = function() {
-  var i, j, str, lowers, uppers;
-  str = this.replace(/([^\W_]+[^\s-]*) */g, function(txt) {
-    return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();
-  });
+	let i, j, str, lowers, uppers;
+	str = this.replace(/([^\W_]+[^\s-]*) */g, function(txt) {
+		return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();
+	});
 
-  // Certain minor words should be left lowercase unless
-  // they are the first or last words in the string
-  lowers = ['A', 'An', 'The', 'And', 'But', 'Or', 'For', 'Nor', 'As', 'At',
-  'By', 'For', 'From', 'In', 'Into', 'Near', 'Of', 'On', 'Onto', 'To', 'With'];
-  for (i = 0, j = lowers.length; i < j; i++)
-    str = str.replace(new RegExp('\\s' + lowers[i] + '\\s', 'g'),
-      function(txt) {
-        return txt.toLowerCase();
-      });
+	// Certain minor words should be left lowercase unless
+	// they are the first or last words in the string
+	lowers = ['A', 'An', 'The', 'And', 'But', 'Or', 'For', 'Nor', 'As', 'At',
+		'By', 'For', 'From', 'In', 'Into', 'Near', 'Of', 'On', 'Onto', 'To', 'With'
+	];
+	for (i = 0, j = lowers.length; i < j; i++)
+		str = str.replace(new RegExp('\\s' + lowers[i] + '\\s', 'g'),
+			function(txt) {
+				return txt.toLowerCase();
+			});
 
-  // Certain words such as initialisms or acronyms should be left uppercase
-  uppers = ['Id', 'Tv'];
-  for (i = 0, j = uppers.length; i < j; i++)
-    str = str.replace(new RegExp('\\b' + uppers[i] + '\\b', 'g'),
-      uppers[i].toUpperCase());
+	// Certain words such as initialisms or acronyms should be left uppercase
+	uppers = ['Id', 'Tv'];
+	for (i = 0, j = uppers.length; i < j; i++)
+		str = str.replace(new RegExp('\\b' + uppers[i] + '\\b', 'g'),
+			uppers[i].toUpperCase());
 
-  return str;
+	return str;
 }
